@@ -170,11 +170,11 @@ class VehicleActivityPickup(VehicleActivity):
             Parameters:
                 veh (Vehicle): The vehicle performing the activities
         """
-
-        self.user.set_state_waiting_vehicle(veh)
-        '''ADC'''
-        veh.waiting_queue.put(self.user.id)
-        print('Pickup start', veh.id, veh.waiting_queue.seen_elements)
+        if self.user.id not in set(veh.waiting_queue.queue):
+            self.user.set_state_waiting_vehicle(veh)
+            '''ADC'''
+            veh.waiting_queue.put(self.user.id)
+            print('Pickup start', veh.id, list(veh.waiting_queue.queue))
 
 
     def done(self, veh: "Vehicle", tcurrent: Time):
@@ -190,7 +190,7 @@ class VehicleActivityPickup(VehicleActivity):
             if veh.waiting_queue.empty():
                 can_pickup = True
             else:
-                if list(veh.waiting_queue.queue)[0] == self.user.id:
+                if veh.waiting_queue.queue[0] == self.user.id:
                     can_pickup = True
 
             if can_pickup:
@@ -198,7 +198,7 @@ class VehicleActivityPickup(VehicleActivity):
                 veh.passengers[self.user.id] = self.user
                 self.user.set_state_inside_vehicle()
                 veh.waiting_queue.get(self.user.id)
-                print('Pickup done', veh.id, veh.waiting_queue.seen_elements)
+                print('Pickup done', veh.id, list(veh.waiting_queue.queue))
 
 
 @dataclass(slots=True)
@@ -214,7 +214,7 @@ class VehicleActivityServing(VehicleActivity):
                 veh (Vehicle): The vehicle performing the activities
         """
         can_serve = True
-        if self.user.id not in veh.waiting_queue.seen_elements:
+        if self.user.id not in list(veh.waiting_queue.queue):
             print('Serving', self.user.id, 'not in waiting queue')
             if len(veh.passengers) + 1 > veh.capacity:
                 can_serve = False
@@ -227,7 +227,7 @@ class VehicleActivityServing(VehicleActivity):
             self.user.vehicle = veh
             veh.passengers[self.user.id] = self.user
             self.user.set_state_inside_vehicle()
-            print('Serving start', veh.id, veh.waiting_queue.seen_elements)
+            print('Serving start', veh.id, list(veh.waiting_queue.queue))
 
     def done(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is done
@@ -283,7 +283,7 @@ class Vehicle(TimeDependentSubject):
 
         super(Vehicle, self).__init__()
 
-        self.waiting_queue = UniqueQueue()
+        self.waiting_queue = queue.Queue()
         self._global_id = str(Vehicle._counter)
         Vehicle._counter += 1
 
@@ -577,22 +577,3 @@ class Train(Vehicle):
 
 
 
-class UniqueQueue:
-    def __init__(self):
-        self.queue = queue.Queue()
-        self.seen_elements = set()
-
-    def put(self, item):
-        if item not in self.seen_elements:
-            self.queue.put(item)
-            self.seen_elements.add(item)
-
-    def get(self, item):
-        self.seen_elements.remove(item)
-        return item
-
-    def empty(self):
-        return self.queue.empty()
-
-    def qsize(self):
-        return self.queue.qsize()
