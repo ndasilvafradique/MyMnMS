@@ -190,7 +190,7 @@ class VehicleActivityPickup(VehicleActivity):
             if veh.waiting_queue.empty():
                 can_pickup = True
             else:
-                if veh.waiting_queue.queue[0] == self.user.id:
+                if list(veh.waiting_queue.queue)[0] == self.user.id:
                     can_pickup = True
 
             if can_pickup:
@@ -587,8 +587,7 @@ class UniqueQueue:
             self.queue.put(item)
             self.seen_elements.add(item)
 
-    def get(self):
-        item = self.queue.get()
+    def get(self, item):
         self.seen_elements.remove(item)
         return item
 
