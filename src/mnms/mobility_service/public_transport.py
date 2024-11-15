@@ -534,7 +534,6 @@ class PublicTransportMobilityService(AbstractMobilityService):
         estimated_pickup_time = chosen_line['table'].get_freq() / 2
         return estimated_pickup_time
 
-
     def periodic_maintenance(self, dt: Dt):
         pass
 

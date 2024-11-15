@@ -6,7 +6,7 @@ from mnms.flow.MFD import MFDFlowMotor
 from mnms.flow.abstract import AbstractReservoir
 from mnms.graph.zone import Zone
 from mnms.time import Time, Dt
-from mnms.vehicles.veh_type import Vehicle, Car
+from mnms.vehicles.custom_veh_type import Vehicle, Car
 from mnms.log import create_logger
 
 log = create_logger(__name__)

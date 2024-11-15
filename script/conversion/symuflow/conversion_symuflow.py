@@ -19,7 +19,7 @@ from mnms.graph.zone import construct_zone_from_contour
 from mnms.generation.layers import get_bounding_box
 from mnms.io.graph import save_graph
 from mnms.time import TimeTable, Time, Dt
-from mnms.vehicles.veh_type import Bus, Metro, Tram
+from mnms.vehicles.custom_veh_type import Bus, Metro, Tram
 from mnms.log import LOGLEVEL, create_logger
 
 log = create_logger('symuflow_conversion')

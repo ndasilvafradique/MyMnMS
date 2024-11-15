@@ -12,7 +12,7 @@ from mnms.generation.roads import generate_manhattan_road
 from mnms.generation.layers import generate_matching_origin_destination_layer, generate_layer_from_roads
 from mnms.mobility_service.on_demand_shared import OnDemandSharedMobilityService
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
-from mnms.vehicles.veh_type import Bike, Bus
+from mnms.vehicles.custom_veh_type import Bike, Bus
 from mnms.travel_decision.dummy import DummyDecisionModel
 from mnms.flow.MFD import MFDFlowMotor, Reservoir
 from mnms.simulation import Supervisor

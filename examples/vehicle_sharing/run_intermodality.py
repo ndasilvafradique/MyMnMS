@@ -11,7 +11,7 @@ from mnms.mobility_service.vehicle_sharing import VehicleSharingMobilityService
 from mnms.mobility_service.personal_vehicle import PersonalMobilityService
 from mnms.tools.observer import CSVVehicleObserver, CSVUserObserver
 from mnms.graph.layers import SharedVehicleLayer, MultiLayerGraph
-from mnms.vehicles.veh_type import Bike
+from mnms.vehicles.custom_veh_type import Bike
 from mnms.travel_decision.dummy import DummyDecisionModel
 from mnms.flow.MFD import MFDFlowMotor, Reservoir
 from mnms.simulation import Supervisor

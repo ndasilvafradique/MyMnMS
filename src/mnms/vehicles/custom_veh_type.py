@@ -1,10 +1,12 @@
-from abc import ABC, abstractmethod
+
+'''ORIGINAL VERSION '''
+
+'''from abc import ABC, abstractmethod
 from collections import deque
 from copy import deepcopy
 from typing import List, Tuple, Deque, Optional, Generator, Callable
 from enum import Enum
 from dataclasses import dataclass, field
-import queue
 
 import numpy as np
 
@@ -172,10 +174,6 @@ class VehicleActivityPickup(VehicleActivity):
         """
 
         self.user.set_state_waiting_vehicle(veh)
-        '''ADC'''
-        veh.waiting_queue.put(self.user.id)
-        print('Pickup start', veh.id, list(veh.waiting_queue.queue))
-
 
     def done(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is done
@@ -184,21 +182,9 @@ class VehicleActivityPickup(VehicleActivity):
                 veh (Vehicle): The vehicle performing the activities
         """
 
-        '''ADC'''
-        if len(veh.passengers) + 1 <= veh.capacity:
-            can_pickup = False
-            if veh.waiting_queue.empty():
-                can_pickup = True
-            else:
-                if veh.waiting_queue.queue[0] == self.user.id:
-                    can_pickup = True
-
-            if can_pickup:
-                self.user.vehicle = veh
-                veh.passengers[self.user.id] = self.user
-                self.user.set_state_inside_vehicle()
-                veh.waiting_queue.get(self.user.id)
-                print('Pickup done', veh.id, list(veh.waiting_queue.queue))
+        self.user.vehicle = veh
+        veh.passengers[self.user.id] = self.user
+        self.user.set_state_inside_vehicle()
 
 
 @dataclass(slots=True)
@@ -213,21 +199,9 @@ class VehicleActivityServing(VehicleActivity):
             Parameters:
                 veh (Vehicle): The vehicle performing the activities
         """
-        can_serve = True
-        if self.user.id not in list(veh.waiting_queue.queue):
-            print('Serving', self.user.id, 'not in waiting queue')
-            if len(veh.passengers) + 1 > veh.capacity:
-                can_serve = False
-                veh.waiting_queue.put(self.user.id)
-        else:
-            can_serve = True
-            veh.waiting_queue.get(self.user.id)
-
-        if can_serve:
-            self.user.vehicle = veh
-            veh.passengers[self.user.id] = self.user
-            self.user.set_state_inside_vehicle()
-            print('Serving start', veh.id, list(veh.waiting_queue.queue))
+        self.user.vehicle = veh
+        veh.passengers[self.user.id] = self.user
+        self.user.set_state_inside_vehicle()
 
     def done(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is done
@@ -237,6 +211,7 @@ class VehicleActivityServing(VehicleActivity):
          """
         self.user.vehicle = None
         veh.passengers.pop(self.user.id)
+
         self.user.remaining_link_length = 0
         upath = self.user.path.nodes
         last_achieved = False
@@ -250,8 +225,8 @@ class VehicleActivityServing(VehicleActivity):
         self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
         self.user.update_achieved_path_ms(veh.mobility_service)
         self.user.vehicle = None
+        # self.user.notify(tcurrent)
         self.user.set_state_stop()
-        self.user.notify(tcurrent)
         # If this is user's personal vehicle, register location of parking and vehicle's mobility service
         # on user's side and last dropped off user on vehicle's side to prevent deletion of personal vehicle
         # before user's arrival at destination
@@ -283,7 +258,6 @@ class Vehicle(TimeDependentSubject):
 
         super(Vehicle, self).__init__()
 
-        self.waiting_queue = UniqueQueue()
         self._global_id = str(Vehicle._counter)
         Vehicle._counter += 1
 
@@ -511,7 +485,6 @@ class Car(Vehicle):
                  mobility_service: str,
                  is_personal: bool,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 4
         super(Car, self).__init__(node, capacity, mobility_service, is_personal, activities)
         self._last_dropped_off_user = None
 
@@ -530,7 +503,6 @@ class Bus(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 100
         super(Bus, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
@@ -541,7 +513,6 @@ class Tram(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 300
         super(Tram, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
@@ -552,7 +523,6 @@ class Metro(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 350
         super(Metro, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
@@ -563,7 +533,6 @@ class Bike(Vehicle):
                  mobility_service: str,
                  is_personal: bool,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 1
         super(Bike, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 class Train(Vehicle):
@@ -574,26 +543,4 @@ class Train(Vehicle):
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
         super(Train, self).__init__(node, capacity, mobility_service, is_personal, activities)
-
-
-
-class UniqueQueue:
-    def __init__(self):
-        self.queue = queue.Queue()
-        self.seen_elements = set()
-
-    def put(self, item):
-        if item not in self.seen_elements:
-            self.queue.put(item)
-            self.seen_elements.add(item)
-
-    def get(self):
-        item = self.queue.get()
-        self.seen_elements.remove(item)
-        return item
-
-    def empty(self):
-        return self.queue.empty()
-
-    def qsize(self):
-        return self.queue.qsize()
+'''

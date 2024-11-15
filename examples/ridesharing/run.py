@@ -15,7 +15,7 @@ from mnms.generation.roads import generate_manhattan_road
 from mnms.tools.observer import CSVVehicleObserver, CSVUserObserver
 from mnms.mobility_service.on_demand_shared import OnDemandSharedMobilityService
 from mnms.graph.layers import MultiLayerGraph
-from mnms.vehicles.veh_type import Car
+from mnms.vehicles.custom_veh_type import Car
 from mnms.time import TimeTable, Time, Dt
 from mnms.generation.layers import generate_layer_from_roads, generate_matching_origin_destination_layer
 from mnms.demand.manager import CSVDemandManager

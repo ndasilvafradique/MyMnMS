@@ -19,7 +19,7 @@ from mnms.simulation import Supervisor
 from mnms.time import TimeTable, Time, Dt
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
 from mnms.travel_decision import DummyDecisionModel
-from mnms.vehicles.veh_type import Bus
+from mnms.vehicles.custom_veh_type import Bus
 
 ##################
 ### Parameters ###

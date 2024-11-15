@@ -3,11 +3,11 @@ from typing import List, Tuple, Optional, Dict
 from mnms.time import Time, Dt
 from mnms.mobility_service.abstract import AbstractMobilityService, Request
 from mnms.log import create_logger
-from mnms.vehicles.veh_type import Vehicle, VehicleActivity
+from mnms.vehicles.custom_veh_type import Vehicle, VehicleActivity
 from mnms.demand.user import User, UserState
 from mnms.tools.observer import TimeDependentSubject
 from mnms.tools.cost import create_service_costs
-from mnms.vehicles.veh_type import VehicleActivityStop, VehicleActivityPickup, VehicleActivityServing, ActivityType
+from mnms.vehicles.custom_veh_type import VehicleActivityStop, VehicleActivityPickup, VehicleActivityServing, ActivityType
 from mnms.travel_decision.abstract import Event, AbstractDecisionModel
 from mnms.flow.user_flow import UserFlow
 

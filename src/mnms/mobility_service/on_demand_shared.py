@@ -17,7 +17,7 @@ from mnms.mobility_service.interfaces import Depot
 from mnms.mobility_service.filters import FilterProtocol, IsWaiting, InRadiusFilter
 from mnms.time import Dt, Time
 from mnms.tools.exceptions import PathNotFound
-from mnms.vehicles.veh_type import Vehicle, VehicleActivity, ActivityType, VehicleActivityStop, VehicleActivityPickup, \
+from mnms.vehicles.custom_veh_type import Vehicle, VehicleActivity, ActivityType, VehicleActivityStop, VehicleActivityPickup, \
     VehicleActivityServing, VehicleActivityRepositioning
 from mnms.tools.cost import create_service_costs
 from mnms.tools.geometry import polygon_area, get_bounding_box

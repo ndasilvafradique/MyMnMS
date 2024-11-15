@@ -7,7 +7,7 @@ from numpy.typing import ArrayLike, NDArray
 from mnms.graph.layers import AbstractLayer
 from mnms.graph.road import RoadDescriptor
 from mnms.mobility_service.interfaces import Depot
-from mnms.vehicles.veh_type import Vehicle, ActivityType
+from mnms.vehicles.custom_veh_type import Vehicle, ActivityType
 
 
 Mask = Union[NDArray[bool], List[bool]]

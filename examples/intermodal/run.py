@@ -17,7 +17,7 @@ from mnms.flow.MFD import MFDFlowMotor, Reservoir
 from mnms.simulation import Supervisor
 from mnms.time import Time, Dt, TimeTable
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
-from mnms.vehicles.veh_type import Bus
+from mnms.vehicles.custom_veh_type import Bus
 
 ##################
 ### Parameters ###

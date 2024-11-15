@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     mmgraph.add_origin_destination_layer(odlayer)
 
-    mmgraph.connect_origindestination_layers(100,1000)
+    mmgraph.connect_origindestination_layers(100, 1000)
 
     # if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
     #     mmgraph.connect_origin_destination_layer(DIST_CONNECTION)
@@ -92,4 +92,4 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('06:30:00'), Time('6:45:00'), Dt(minutes=1), 10)
+    supervisor.run(Time('06:30:00'), Time('7:15:00'), Dt(minutes=1), 10)

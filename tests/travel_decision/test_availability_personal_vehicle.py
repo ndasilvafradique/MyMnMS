@@ -20,7 +20,7 @@ from mnms.flow.MFD import MFDFlowMotor, Reservoir
 from mnms.simulation import Supervisor
 from mnms.vehicles.manager import VehicleManager
 from mnms.log import set_all_mnms_logger_level, LOGLEVEL
-from mnms.vehicles.veh_type import Car
+from mnms.vehicles.custom_veh_type import Car
 
 class TestAvailabilityPersonalVehicle(unittest.TestCase):
     def setUp(self):

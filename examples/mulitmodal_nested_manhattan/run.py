@@ -19,7 +19,7 @@ from mnms.mobility_service.public_transport import PublicTransportMobilityServic
 from mnms.graph.layers import MultiLayerGraph, PublicTransportLayer
 from mnms.mobility_service.personal_vehicle import PersonalMobilityService
 from mnms.mobility_service.on_demand import OnDemandMobilityService
-from mnms.vehicles.veh_type import Bus, Metro, Car, Train
+from mnms.vehicles.custom_veh_type import Bus, Metro, Car, Train
 from mnms.time import TimeTable, Time, Dt
 from mnms.generation.layers import generate_layer_from_roads, generate_matching_origin_destination_layer
 from layers_connection import connect_layers

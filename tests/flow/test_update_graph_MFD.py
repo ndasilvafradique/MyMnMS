@@ -14,7 +14,7 @@ from mnms.simulation import Supervisor
 from mnms.time import Dt, TimeTable, Time
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
 from mnms.travel_decision.dummy import DummyDecisionModel
-from mnms.vehicles.veh_type import Vehicle
+from mnms.vehicles.custom_veh_type import Vehicle
 from mnms.log import set_all_mnms_logger_level, LOGLEVEL
 
 

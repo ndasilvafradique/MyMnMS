@@ -14,8 +14,8 @@ from mnms.simulation import Supervisor
 from mnms.time import Time, Dt, TimeTable
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
 from mnms.travel_decision.dummy import DummyDecisionModel
-from mnms.vehicles.veh_type import Bus
-from mnms.vehicles.veh_type import ActivityType
+from mnms.vehicles.custom_veh_type import Bus
+from mnms.vehicles.custom_veh_type import ActivityType
 
 
 class TestPublicTransportSeveralPickups(unittest.TestCase):

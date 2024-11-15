@@ -21,7 +21,7 @@ from mnms.graph.zone import construct_zone_from_sections
 from mnms.mobility_service.on_demand import OnDemandMobilityService
 from mnms.mobility_service.on_demand_shared import OnDemandSharedMobilityService
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
-from mnms.vehicles.veh_type import Bus
+from mnms.vehicles.custom_veh_type import Bus
 from mnms.log import set_all_mnms_logger_level, LOGLEVEL
 from mnms.flow.user_flow import UserFlow
 

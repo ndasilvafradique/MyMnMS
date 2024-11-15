@@ -18,7 +18,7 @@ from mnms.mobility_service.on_demand import OnDemandMobilityService
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
 from mnms.time import Dt, TimeTable, Time
 from mnms.vehicles.manager import VehicleManager
-from mnms.vehicles.veh_type import Vehicle
+from mnms.vehicles.custom_veh_type import Vehicle
 from mnms.tools.observer import CSVVehicleObserver
 from mnms.demand import BaseDemandManager, User
 from mnms.travel_decision.dummy import DummyDecisionModel

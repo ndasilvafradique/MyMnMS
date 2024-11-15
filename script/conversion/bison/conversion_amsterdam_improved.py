@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from coordinates import rd_to_utm
 from mnms.graph.layers import PublicTransportLayer, MultiLayerGraph
 from mnms.generation.roads import generate_pt_line_road, generate_one_zone
-from mnms.vehicles.veh_type import Tram, Metro, Bus
+from mnms.vehicles.custom_veh_type import Tram, Metro, Bus
 from mnms.generation.zones import generate_one_zone
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
 from mnms.time import TimeTable, Dt, Time
