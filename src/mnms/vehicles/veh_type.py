@@ -174,7 +174,7 @@ class VehicleActivityPickup(VehicleActivity):
         self.user.set_state_waiting_vehicle(veh)
         '''ADC'''
         veh.waiting_queue.put(self.user.id)
-        print('Pickup start', veh.id, list(veh.waiting_queue.queue))
+        print('Pickup start', veh.id, veh.waiting_queue.seen_elements)
 
 
     def done(self, veh: "Vehicle", tcurrent: Time):
@@ -198,7 +198,7 @@ class VehicleActivityPickup(VehicleActivity):
                 veh.passengers[self.user.id] = self.user
                 self.user.set_state_inside_vehicle()
                 veh.waiting_queue.get(self.user.id)
-                print('Pickup done', veh.id, list(veh.waiting_queue.queue))
+                print('Pickup done', veh.id, veh.waiting_queue.seen_elements)
 
 
 @dataclass(slots=True)
@@ -214,7 +214,7 @@ class VehicleActivityServing(VehicleActivity):
                 veh (Vehicle): The vehicle performing the activities
         """
         can_serve = True
-        if self.user.id not in list(veh.waiting_queue.queue):
+        if self.user.id not in veh.waiting_queue.seen_elements:
             print('Serving', self.user.id, 'not in waiting queue')
             if len(veh.passengers) + 1 > veh.capacity:
                 can_serve = False
@@ -227,7 +227,7 @@ class VehicleActivityServing(VehicleActivity):
             self.user.vehicle = veh
             veh.passengers[self.user.id] = self.user
             self.user.set_state_inside_vehicle()
-            print('Serving start', veh.id, list(veh.waiting_queue.queue))
+            print('Serving start', veh.id, veh.waiting_queue.seen_elements)
 
     def done(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is done
