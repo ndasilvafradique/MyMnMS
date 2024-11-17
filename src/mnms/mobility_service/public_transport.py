@@ -139,7 +139,7 @@ def _insert_in_activity(pu_node, ind_pu, do_node, ind_do, user, veh):
 
 
 class PublicTransportMobilityService(AbstractMobilityService):
-    def __init__(self, id: str, veh_capacity: int = 50):
+    def __init__(self, id: str, veh_capacity: int = 50, capacity_info=None):
         """
         Implement a public transport mobility service based on lines and timetables.
 
@@ -149,6 +149,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         super(PublicTransportMobilityService, self).__init__(id, veh_capacity=veh_capacity, dt_matching=0,
                                                              dt_periodic_maintenance=0)
+        self.capacity_info = capacity_info
         self.vehicles: Dict[str, Deque[Vehicle]] = defaultdict(deque)
         self._timetable_iter: Dict[str, Generator[Time, None, None]] = dict()
         self._current_time_table: Dict[str, Time] = dict()
@@ -156,6 +157,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         self._next_veh_departure: Dict[str, Optional[Tuple[Time, Vehicle]]] = defaultdict(lambda: None)
 
         self.gnodes = None
+
 
     @cached_property
     def lines(self):
@@ -219,6 +221,9 @@ class PublicTransportMobilityService(AbstractMobilityService):
             veh_path = self.construct_public_transport_path(lid)
             end_node = self.lines[lid]['nodes'][-1]
             start_node = self.lines[lid]['nodes'][0]
+
+            #capacity = self.capacity_info[lid]
+            #print(capacity)
             new_veh = self.fleet.create_vehicle(start_node,
                                                 capacity=self._veh_capacity,
                                                 activities=[VehicleActivityStop(node=end_node,

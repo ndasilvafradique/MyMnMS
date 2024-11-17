@@ -18,6 +18,7 @@ _norm = np.linalg.norm
 _TYPE_ITEM_PATH = Tuple[Tuple[str, str], float]
 _TYPE_PATH = List[_TYPE_ITEM_PATH]
 
+
 class ActivityType(Enum):
     """Enumerate activity types."""
 
@@ -170,12 +171,16 @@ class VehicleActivityPickup(VehicleActivity):
             Parameters:
                 veh (Vehicle): The vehicle performing the activities
         """
-        if self.user.id not in set(veh.waiting_queue.queue):
+        '''Dato che pickup può essere eseguito anche dopo serving, assicuriamoci che l'utente non sia già nella coda'''
+        if veh.is_public_transport():
+            if self.user.id not in set(veh.waiting_queue.queue):
+                '''Se non è nella coda, aggiungiamolo e cambiamo il suo stato'''
+                self.user.set_state_waiting_vehicle(veh)
+                veh.waiting_queue.put(self.user.id)
+                print('Pickup start', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
+        else:
             self.user.set_state_waiting_vehicle(veh)
-            '''ADC'''
-            veh.waiting_queue.put(self.user.id)
-            print('Pickup start', veh.id, list(veh.waiting_queue.queue))
-
+            print('Pickup start', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
 
     def done(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is done
@@ -183,22 +188,37 @@ class VehicleActivityPickup(VehicleActivity):
             Parameters:
                 veh (Vehicle): The vehicle performing the activities
         """
-
-        '''ADC'''
-        if len(veh.passengers) + 1 <= veh.capacity:
+        if veh.is_public_transport():
+            '''Controlliamo se il numero di passeggeri nel veicolo più quello che ci vorrebbe salire, 
+            è al di sotto della capacità del veicolo...'''
             can_pickup = False
-            if veh.waiting_queue.empty():
-                can_pickup = True
-            else:
-                if veh.waiting_queue.queue[0] == self.user.id:
+            if len(veh.passengers) + 1 <= veh.capacity:
+                '''... se la coda è vuota oppure se ci sono persone in attesa e l'utente è il primo della lista,
+                potrà salire (⁜)'''
+                if (veh.waiting_queue.empty() or
+                        (not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id)):
                     can_pickup = True
 
+            '''Se, al termine dei controlli, è possibile accogliere l'utente, gli assegniamo il veicolo, 
+            cambiamo stato e lo togliamo dalla coda'''
             if can_pickup:
                 self.user.vehicle = veh
                 veh.passengers[self.user.id] = self.user
                 self.user.set_state_inside_vehicle()
-                veh.waiting_queue.get(self.user.id)
-                print('Pickup done', veh.id, list(veh.waiting_queue.queue))
+                self.user.notify(tcurrent)
+                '''Questo controllo è necessario altrimenti la coda si bloccherà in attesa di avere un elemento disponibile'''
+                if not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id:
+                    veh.waiting_queue.get()
+                    '''Il controllo è sufficiente perchè se la coda è vuota, è il primo a salire. 
+                    Altrimenti, se la coda non è vuota, ma can_pickup è true, 
+                    la seconda parte di (⁜) è necessariamente vera. Quindi sicuramente è il primo.'''
+                print('Pickup done', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
+        else:
+            self.user.vehicle = veh
+            veh.passengers[self.user.id] = self.user
+            self.user.set_state_inside_vehicle()
+            self.user.notify(tcurrent)
+            print('Pickup done', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
 
 
 @dataclass(slots=True)
@@ -213,21 +233,23 @@ class VehicleActivityServing(VehicleActivity):
             Parameters:
                 veh (Vehicle): The vehicle performing the activities
         """
-        can_serve = True
-        if self.user.id not in list(veh.waiting_queue.queue):
-            print('Serving', self.user.id, 'not in waiting queue')
-            if len(veh.passengers) + 1 > veh.capacity:
-                can_serve = False
-                veh.waiting_queue.put(self.user.id)
-        else:
-            can_serve = True
-            veh.waiting_queue.get(self.user.id)
+        if veh.is_public_transport():
+            can_serve = False
+            '''Se l'utente è già nel veicolo, a causa di un precedente pickup, non serve fare serving'''
+            if not self.user.is_in_vehicle:
+                if veh.waiting_queue.empty() or (not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id):
+                    can_serve = True
 
-        if can_serve:
+            if can_serve:
+                self.user.vehicle = veh
+                veh.passengers[self.user.id] = self.user
+                self.user.set_state_inside_vehicle()
+                print('Serving start', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
+        else:
             self.user.vehicle = veh
             veh.passengers[self.user.id] = self.user
             self.user.set_state_inside_vehicle()
-            print('Serving start', veh.id, list(veh.waiting_queue.queue))
+            print('Serving start', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
 
     def done(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is done
@@ -235,33 +257,37 @@ class VehicleActivityServing(VehicleActivity):
              Parameters:
                  veh (Vehicle): The vehicle performing the activities
          """
-        self.user.vehicle = None
-        veh.passengers.pop(self.user.id)
-        self.user.remaining_link_length = 0
-        upath = self.user.path.nodes
-        last_achieved = False
-        if veh._current_link is not None:
-            if veh._current_link[1] == veh._current_node and self.user.achieved_path and veh._current_node == self.user.achieved_path[-1]:
-                last_achieved = True
-            unode = veh._current_link[1]
-        else:
-            unode = veh._current_node
-        next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=last_achieved) + 1
-        self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
-        self.user.update_achieved_path_ms(veh.mobility_service)
-        self.user.vehicle = None
-        self.user.set_state_stop()
-        self.user.notify(tcurrent)
-        # If this is user's personal vehicle, register location of parking and vehicle's mobility service
-        # on user's side and last dropped off user on vehicle's side to prevent deletion of personal vehicle
-        # before user's arrival at destination
-        if veh._is_personal:
-            self.user.park_personal_vehicle(veh.mobility_service, unode)
-            veh.last_dropped_off_user = self.user
+        if self.user.id in veh.passengers:
+            if veh.is_public_transport() and (not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id):
+                veh.waiting_queue.get()
+            self.user.vehicle = None
+            veh.passengers.pop(self.user.id)
+            print('Serving done', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}')
+            self.user.remaining_link_length = 0
+            upath = self.user.path.nodes
+            last_achieved = False
+            if veh._current_link is not None:
+                if veh._current_link[1] == veh._current_node and self.user.achieved_path and veh._current_node == \
+                        self.user.achieved_path[-1]:
+                    last_achieved = True
+                unode = veh._current_link[1]
+            else:
+                unode = veh._current_node
+            next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=last_achieved) + 1
+            self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
+            self.user.update_achieved_path_ms(veh.mobility_service)
+            self.user.vehicle = None
+            self.user.set_state_stop()
+            self.user.notify(tcurrent)
+            # If this is user's personal vehicle, register location of parking and vehicle's mobility service
+            # on user's side and last dropped off user on vehicle's side to prevent deletion of personal vehicle
+            # before user's arrival at destination
+            if veh._is_personal:
+                self.user.park_personal_vehicle(veh.mobility_service, unode)
+                veh.last_dropped_off_user = self.user
 
 
 class Vehicle(TimeDependentSubject):
-
     _counter = 0
 
     def __init__(self,
@@ -291,22 +317,22 @@ class Vehicle(TimeDependentSubject):
         self.mobility_service = mobility_service
         self._is_personal = is_personal
 
-        self.passengers = dict()                     # id_user, user
+        self.passengers = dict()  # id_user, user
 
         self._current_link = None
         self._current_node = node
         self._remaining_link_length = None
-        self._position = None                       # current vehicle coordinates
-        self._distance = 0                          # travelled distance ( reset to zero if other trip ?)
-        self._distance_at_last_res_change = 0       # distance this vehicle has traveled since it enters current reservoir
+        self._position = None  # current vehicle coordinates
+        self._distance = 0  # travelled distance ( reset to zero if other trip ?)
+        self._distance_at_last_res_change = 0  # distance this vehicle has traveled since it enters current reservoir
         self._iter_path = None
-        self.speed = None                           # current speed
+        self.speed = None  # current speed
         self._dt_move = None
         self._achieved_path = []
         self._achieved_path_since_last_notify = []
 
         self.activities: Deque[VehicleActivity] = deque([])
-        self.activity = None                        # current activity
+        self.activity = None  # current activity
 
         if activities is not None:
             self.add_activities(activities)
@@ -385,6 +411,9 @@ class Vehicle(TimeDependentSubject):
     def achieved_path(self):
         return self._achieved_path
 
+    def is_public_transport(self):
+        return True if self.mobility_service.upper() in ['BUS', 'TRAM', 'METRO'] else False
+
     def update_achieved_path(self):
         if len(self.achieved_path) == 0 or self.current_node != self.achieved_path[-1]:
             self._achieved_path.append(self.current_node)
@@ -393,7 +422,7 @@ class Vehicle(TimeDependentSubject):
     def flush_achieved_path_since_last_notify(self):
         self._achieved_path_since_last_notify = []
 
-    def add_activities(self, activities:List[VehicleActivity]):
+    def add_activities(self, activities: List[VehicleActivity]):
         for a in activities:
             self.activities.append(a)
 
@@ -411,7 +440,8 @@ class Vehicle(TimeDependentSubject):
         if activity.activity_type is not ActivityType.STOP:
             if activity.path:
                 self._current_link, self._remaining_link_length = next(activity.iter_path)
-                assert self._current_node == self._current_link[0], f"Veh {self.id} current node {self._current_node} is not equal to the next upstream link {self._current_link[0]}"
+                assert self._current_node == self._current_link[
+                    0], f"Veh {self.id} current node {self._current_node} is not equal to the next upstream link {self._current_link[0]}"
             else:
                 activity.is_done = True
 
@@ -445,19 +475,19 @@ class Vehicle(TimeDependentSubject):
     def set_position(self, position: np.ndarray):
         self._position = position
 
-    def drop_user(self, tcurrent:Time, user:'User', drop_pos:np.ndarray):
+    def drop_user(self, tcurrent: Time, user: 'User', drop_pos: np.ndarray):
         log.info(f"{user} is dropped at {self._current_link[0]}")
         user.remaining_link_length = 0
         upath = user.path.nodes
         unode = self._current_link[0]
-        next_node_ind = user.get_node_index_in_path(unode)+1
+        next_node_ind = user.get_node_index_in_path(unode) + 1
         user.set_position((unode, upath[next_node_ind]), unode, 0, drop_pos, tcurrent)
         user.vehicle = None
         user.notify(tcurrent)
 
         del self.passengers[user.id]
 
-    def drop_all_passengers(self, tcurrent:Time):
+    def drop_all_passengers(self, tcurrent: Time):
         for _, user in self.passengers.values():
             log.info(f"{user} is dropped at {self._current_link[1]}")
             unode = self._current_link[1]
@@ -523,6 +553,7 @@ class Car(Vehicle):
     def last_dropped_off_user(self, user):
         self._last_dropped_off_user = user
 
+
 class Bus(Vehicle):
     def __init__(self,
                  node: str,
@@ -552,7 +583,7 @@ class Metro(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 350
+        capacity = 3
         super(Metro, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
@@ -566,6 +597,7 @@ class Bike(Vehicle):
         capacity = 1
         super(Bike, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
+
 class Train(Vehicle):
     def __init__(self,
                  node: str,
@@ -574,6 +606,3 @@ class Train(Vehicle):
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
         super(Train, self).__init__(node, capacity, mobility_service, is_personal, activities)
-
-
-

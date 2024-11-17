@@ -12,6 +12,7 @@ from mnms.generation.layers import generate_bbox_origin_destination_layer
 from mnms.mobility_service.personal_vehicle import PersonalMobilityService
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
 from mnms.io.graph import save_transit_link_odlayer, load_transit_links
+import json
 
 import pandas as pd
 
@@ -41,13 +42,27 @@ def calculate_V_MFD(acc):
     V_TRAM_BUS = 0.7 * V
     return {"CAR": V, "METRO": 17, "BUS": V_TRAM_BUS, "TRAM": V_TRAM_BUS}
 
+def load_capacity_info(capacity_file):
+    capacity_info = {}
+    with open(capacity_file, 'r') as f:
+        pt_network = json.load(f)
+        for i in range(len(pt_network['LAYERS'])):
+            layer = pt_network['LAYERS'][i]
+            layer_id = layer['ID']
+            if 'METRO' in layer_id or 'BUS' in layer_id or 'TRAM' in layer_id:
+                for k in range(len(layer)):
+                    veh = layer['LINES'][k]['ID']
+                    capacity_info[veh] = layer['LINES'][k]['CAPACITY']
+    print(capacity_info)
+    return capacity_info
+
 
 if __name__ == '__main__':
     NX = 10
     NY = 10
     DIST_CONNECTION = 1e2
 
-    mmgraph = load_graph(indir + "/lyon_mnms_gtfs.json")
+    mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
 
     odlayer = generate_bbox_origin_destination_layer(mmgraph.roads, NX, NY)
 
@@ -65,15 +80,17 @@ if __name__ == '__main__':
     personal_car.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["CAR"].add_mobility_service(personal_car)
 
-    bus_service = PublicTransportMobilityService("BUS")
+    capacity_info = load_capacity_info(indir + "/lyon_network_gtfs_mod.json")
+
+    bus_service = PublicTransportMobilityService("BUS", capacity_info=capacity_info)
     bus_service.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["BUSLayer"].add_mobility_service(bus_service)
 
-    tram_service = PublicTransportMobilityService("TRAM")
+    tram_service = PublicTransportMobilityService("TRAM", capacity_info=capacity_info)
     tram_service.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["TRAMLayer"].add_mobility_service(tram_service)
 
-    metro_service = PublicTransportMobilityService("METRO")
+    metro_service = PublicTransportMobilityService("METRO", capacity_info=capacity_info)
     metro_service.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["METROLayer"].add_mobility_service(metro_service)
 
@@ -92,4 +109,4 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('06:30:00'), Time('7:15:00'), Dt(minutes=1), 10)
+    supervisor.run(Time('06:30:00'), Time('7:15:00'), Dt(seconds=1), 10)
