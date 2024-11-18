@@ -222,10 +222,10 @@ class PublicTransportMobilityService(AbstractMobilityService):
             end_node = self.lines[lid]['nodes'][-1]
             start_node = self.lines[lid]['nodes'][0]
 
-            #capacity = self.capacity_info[lid]
-            #print(capacity)
+            capacity = self.capacity_info[lid]
             new_veh = self.fleet.create_vehicle(start_node,
-                                                capacity=self._veh_capacity,
+                                                capacity=capacity,
+                                                # capacity=self._veh_capacity,
                                                 activities=[VehicleActivityStop(node=end_node,
                                                                                 path=veh_path)])
             new_veh._current_link = veh_path[0][0]
@@ -250,6 +250,8 @@ class PublicTransportMobilityService(AbstractMobilityService):
             all_departures.append(start_veh)
             self.vehicles[lid].appendleft(start_veh)
 
+            capacity = self.capacity_info[lid]
+
             # Manage next departure
             self._current_time_table[lid] = self._next_time_table[lid]
             if self._current_time_table[lid] is not None:
@@ -260,7 +262,8 @@ class PublicTransportMobilityService(AbstractMobilityService):
                     end_node = self.lines[lid]['nodes'][-1]
                     start_node = self.lines[lid]['nodes'][0]
                 new_veh = self.fleet.create_vehicle(start_node,
-                                                    capacity=self._veh_capacity,
+                                                    capacity=capacity,
+                                                    # capacity=self._veh_capacity,
                                                     activities=[VehicleActivityStop(node=end_node,
                                                                                     path=veh_path)])
                 new_veh._current_link = veh_path[0][0]
@@ -294,11 +297,14 @@ class PublicTransportMobilityService(AbstractMobilityService):
         end_node = self.lines[lid]['nodes'][-1]
         start_node = self.lines[lid]['nodes'][0]
 
+        capacity = self.capacity_info[lid]
+
         # At first call in the recursive process, create the next veh to depart
         if all_departures is None:
             if self._next_veh_departure[lid] is None and self._current_time_table[lid] is not None:
                 new_veh = self.fleet.create_vehicle(start_node,
-                                                    capacity=self._veh_capacity,
+                                                    capacity=capacity,
+                                                    # capacity=self._veh_capacity,
                                                     activities=[VehicleActivityStop(node=end_node,
                                                                                     path=veh_path)])
                 new_veh._current_link = veh_path[0][0]
@@ -335,8 +341,11 @@ class PublicTransportMobilityService(AbstractMobilityService):
             try:
                 self._next_time_table[lid] = next(self._timetable_iter[lid])
 
+                capacity = self.capacity_info[lid]
+
                 new_veh = self.fleet.create_vehicle(start_node,
-                                                    capacity=self._veh_capacity,
+                                                    capacity=capacity,
+                                                    # capacity=self._veh_capacity,
                                                     activities=[VehicleActivityStop(node=end_node,
                                                                                     path=veh_path)])
                 new_veh._current_link = veh_path[0][0]

@@ -43,6 +43,7 @@ def calculate_V_MFD(acc):
     return {"CAR": V, "METRO": 17, "BUS": V_TRAM_BUS, "TRAM": V_TRAM_BUS}
 
 def load_capacity_info(capacity_file):
+    print("Loading capacity info from {}".format(capacity_file))
     capacity_info = {}
     with open(capacity_file, 'r') as f:
         pt_network = json.load(f)
@@ -50,10 +51,10 @@ def load_capacity_info(capacity_file):
             layer = pt_network['LAYERS'][i]
             layer_id = layer['ID']
             if 'METRO' in layer_id or 'BUS' in layer_id or 'TRAM' in layer_id:
-                for k in range(len(layer)):
+                for k in range(len(layer['LINES'])):
                     veh = layer['LINES'][k]['ID']
                     capacity_info[veh] = layer['LINES'][k]['CAPACITY']
-    print(capacity_info)
+
     return capacity_info
 
 
@@ -109,4 +110,4 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('06:30:00'), Time('7:15:00'), Dt(seconds=1), 10)
+    supervisor.run(Time('06:30:00'), Time('07:00:00'), Dt(seconds=3), 10)

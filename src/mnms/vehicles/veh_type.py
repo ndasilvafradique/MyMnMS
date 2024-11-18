@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import List, Tuple, Deque, Optional, Generator, Callable
 from enum import Enum
 from dataclasses import dataclass, field
-import queue
+import queue, random
 
 import numpy as np
 
@@ -17,6 +17,31 @@ _norm = np.linalg.norm
 
 _TYPE_ITEM_PATH = Tuple[Tuple[str, str], float]
 _TYPE_PATH = List[_TYPE_ITEM_PATH]
+
+
+def will_be_selected(q, item):
+
+    N = len(q.queue)
+    pos = find_position(q.queue, item)
+    """
+    Calculates probabilities for each position in a queue of length N.
+    """
+    if N == 1:
+        return True
+    else:
+        p = 1 - (pos - 1) / (N - 1)
+        # return random.random() <= p
+        return 0.05 <= p
+
+
+def find_position(q, item):
+    position = 1
+    for i in q:
+        if i == item:
+            return position
+        position += 1
+    return -1
+
 
 
 class ActivityType(Enum):
@@ -128,9 +153,18 @@ class VehicleActivityStop(VehicleActivity):
             Parameters:
                 veh (Vehicle): The vehicle performing the activities
         """
-
-        if self.user is not None:
-            self.user.vehicle = veh
+        '''non saprei onestamente, perche' come faccio a dedurre se l'utente debba scendere o salire?'''
+        if veh.is_public_transport():
+            if self.user is not None:
+                if not self.user.is_in_vehicle:
+                    if self.user.id not in set(veh.waiting_queue.queue):
+                        veh.waiting_queue.put(self.user.id)
+                        self.user.set_state_waiting_vehicle(veh)
+                print('Stop done', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
+        else:
+            '''non me lo spiego'''
+            if self.user is not None:
+                self.user.vehicle = veh
 
 
 @dataclass(slots=True)
@@ -157,6 +191,9 @@ class VehicleActivityRepositioning(VehicleActivity):
         """
 
         return
+
+
+
 
 
 @dataclass(slots=True)
@@ -196,7 +233,7 @@ class VehicleActivityPickup(VehicleActivity):
                 '''... se la coda è vuota oppure se ci sono persone in attesa e l'utente è il primo della lista,
                 potrà salire (⁜)'''
                 if (veh.waiting_queue.empty() or
-                        (not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id)):
+                        (not veh.waiting_queue.empty() and will_be_selected(veh.waiting_queue, self.user.id))):
                     can_pickup = True
 
             '''Se, al termine dei controlli, è possibile accogliere l'utente, gli assegniamo il veicolo, 
@@ -207,7 +244,7 @@ class VehicleActivityPickup(VehicleActivity):
                 self.user.set_state_inside_vehicle()
                 self.user.notify(tcurrent)
                 '''Questo controllo è necessario altrimenti la coda si bloccherà in attesa di avere un elemento disponibile'''
-                if not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id:
+                if not veh.waiting_queue.empty() and will_be_selected(veh.waiting_queue, self.user.id):
                     veh.waiting_queue.get()
                     '''Il controllo è sufficiente perchè se la coda è vuota, è il primo a salire. 
                     Altrimenti, se la coda non è vuota, ma can_pickup è true, 
@@ -237,14 +274,25 @@ class VehicleActivityServing(VehicleActivity):
             can_serve = False
             '''Se l'utente è già nel veicolo, a causa di un precedente pickup, non serve fare serving'''
             if not self.user.is_in_vehicle:
-                if veh.waiting_queue.empty() or (not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id):
+                '''Se la coda e' vuota, oppure lui e' il primo in attesa, servilo'''
+                if veh.waiting_queue.empty() or (not veh.waiting_queue.empty() and will_be_selected(veh.waiting_queue, self.user.id)):
                     can_serve = True
+                ### FOR CHRISTOPHE: i am not sure if I need to add this control, because I don't know if serving start and serving done can be performed sequentially or not
+                elif self.user.id not in set(veh.waiting_queue.queue):
+                    '''altrimenti, se non stava nella coda, mettilo in lista'''
+                    veh.waiting_queue.put(self.user.id)
 
             if can_serve:
-                self.user.vehicle = veh
-                veh.passengers[self.user.id] = self.user
-                self.user.set_state_inside_vehicle()
+                ### FOR CHRISTOPHE: i am not sure if I need to add this control, because I don't know if serving start and serving done can be performed sequentially or not
+                '''Se si trovava nella coda va rimosso'''
+                if veh.waiting_queue.empty() and will_be_selected(veh.waiting_queue, self.user.id):
+                    self.user.vehicle = veh
+                    veh.passengers[self.user.id] = self.user
+                    self.user.set_state_inside_vehicle()
+                    ### REMOVING THE USER FROM THE WAITING QUEUE SHOULD BE DONE ONLY IN THE DONE SERVING, BUT I DON'T KNOW IF IT SUFFICIENT
+                    veh.waiting_queue.get()
                 print('Serving start', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', list(veh.waiting_queue.queue))
+
         else:
             self.user.vehicle = veh
             veh.passengers[self.user.id] = self.user
@@ -257,8 +305,9 @@ class VehicleActivityServing(VehicleActivity):
              Parameters:
                  veh (Vehicle): The vehicle performing the activities
          """
+        '''Se l'utente e' un passeggero di un trasporto pubblico ed e' il primo della lista nella coda, deve salire sul mezzo'''
         if self.user.id in veh.passengers:
-            if veh.is_public_transport() and (not veh.waiting_queue.empty() and veh.waiting_queue.queue[0] == self.user.id):
+            if veh.is_public_transport() and (not veh.waiting_queue.empty() and will_be_selected(veh.waiting_queue, self.user.id)):
                 veh.waiting_queue.get()
             self.user.vehicle = None
             veh.passengers.pop(self.user.id)
@@ -541,7 +590,6 @@ class Car(Vehicle):
                  mobility_service: str,
                  is_personal: bool,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 4
         super(Car, self).__init__(node, capacity, mobility_service, is_personal, activities)
         self._last_dropped_off_user = None
 
@@ -561,7 +609,6 @@ class Bus(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 100
         super(Bus, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
@@ -572,7 +619,6 @@ class Tram(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 300
         super(Tram, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
@@ -583,7 +629,6 @@ class Metro(Vehicle):
                  mobility_service: str,
                  is_personal: bool = False,
                  activities: Optional[VehicleActivity] = None):
-        capacity = 3
         super(Metro, self).__init__(node, capacity, mobility_service, is_personal, activities)
 
 
