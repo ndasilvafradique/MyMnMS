@@ -210,6 +210,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         ## Go to proper departure in time tables
         while self._current_time_table[lid] is not None and self._current_time_table[lid] < time:
+            print(f'In while {lid} {self._current_time_table[lid]} < {time}')
             self._current_time_table[lid] = self._next_time_table[lid]
             try:
                 self._next_time_table[lid] = next(self._timetable_iter[lid])
