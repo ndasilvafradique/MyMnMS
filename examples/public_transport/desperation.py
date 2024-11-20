@@ -54,6 +54,7 @@ def load_capacity_info(capacity_file):
                 for k in range(len(layer['LINES'])):
                     veh = layer['LINES'][k]['ID']
                     capacity_info[veh] = layer['LINES'][k]['CAPACITY']
+                    capacity_info[veh] = 10
 
     return capacity_info
 
@@ -110,4 +111,4 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('7:30:00'), Time('08:00:00'), Dt(minutes=1), 10)
+    supervisor.run(Time('7:30:00'), Time('8:00:00'), Dt(minutes=1), 1)

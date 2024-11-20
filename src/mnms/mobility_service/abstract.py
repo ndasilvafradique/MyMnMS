@@ -286,10 +286,17 @@ class AbstractMobilityService(ABC):
                             # Args user_flow and decision_model are useful for some types of mobility services, vehcile sharing for example
                             # where a match can lead to other user canceling their request
                             users_canceling.extend(self.matching(req, new_users, user_flow, decision_model, dt))
+                            self.cancel_request(uid)
                         else:
-                            self.matching(req, dt)
-                        # Remove user from list of users waiting to be matched
-                        self.cancel_request(uid)
+                            match_res = self.matching(req, dt)
+                            if match_res is not None:
+                                added = match_res[0]
+                                is_public = match_res[1]
+                                if is_public and added:
+                                    # Remove user from list of users waiting to be matched
+                                    self.cancel_request(uid)
+                            else:
+                                self.cancel_request(uid)
                     else:
                         log.info(f"{uid} refused {self.id} offer (predicted pickup time ({service_dt}) is too long, wait for better proposition...")
                     self._cache_request_vehicles = dict()

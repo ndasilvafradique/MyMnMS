@@ -373,7 +373,8 @@ class Supervisor(object):
                 self.step_dynamic_space_sharing()
 
                 # Call matching for all mobility services
-                self.call_matching_mobility_services(new_users, flow_dt)
+                for u in new_users:
+                    self.call_matching_mobility_services([u], flow_dt)
 
                 # Call flow motor step
                 self.call_flow_motor_step(flow_dt)

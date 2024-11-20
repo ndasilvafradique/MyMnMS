@@ -462,7 +462,7 @@ class OnDemandSharedMobilityService(AbstractOnDemandMobilityService):
 
         veh, new_plan = self._cache_request_vehicles[user.id]
         veh.activities = deque(new_plan)
-        veh.override_current_activity()
+        veh.override_current_activity(dt)
         user.set_state_waiting_vehicle(veh)
         immediate_match = len(new_plan) > 1 \
             and new_plan[0].user == request.user and new_plan[0].path == [] \

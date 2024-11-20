@@ -210,7 +210,6 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         ## Go to proper departure in time tables
         while self._current_time_table[lid] is not None and self._current_time_table[lid] < time:
-            print(f'In while {lid} {self._current_time_table[lid]} < {time}')
             self._current_time_table[lid] = self._next_time_table[lid]
             try:
                 self._next_time_table[lid] = next(self._timetable_iter[lid])
@@ -491,7 +490,17 @@ class PublicTransportMobilityService(AbstractMobilityService):
         drop_node = request.drop_node
         veh, line = self._cache_request_vehicles[user.id]
         log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self.id}')
-        self.add_passenger(user, drop_node, veh, line["nodes"])
+        '''CHECK FOR CAPACITY'''
+        added = False
+        passengers_len = len(veh.passengers)
+        if passengers_len < veh.capacity:
+            added = True
+            print(f'Adding user {user.id} {added}')
+            self.add_passenger(user, drop_node, veh, line["nodes"])
+        if not added:
+            print()
+        print('Matching', veh.type, veh.id, f'{passengers_len}/{veh.capacity} {user.id} {added}')
+        return added, veh.is_public_transport()
 
     def step_maintenance(self, dt: Dt):
         """Method that proceeds to the maintenance phase. For PublicTransportMobilityService,
