@@ -497,8 +497,6 @@ class PublicTransportMobilityService(AbstractMobilityService):
             added = True
             print(f'Adding user {user.id} {added}')
             self.add_passenger(user, drop_node, veh, line["nodes"])
-        if not added:
-            print()
         print('Matching', veh.type, veh.id, f'{passengers_len}/{veh.capacity} {user.id} {added}')
         return added, veh.is_public_transport()
 
