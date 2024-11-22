@@ -495,9 +495,9 @@ class PublicTransportMobilityService(AbstractMobilityService):
         passengers_len = len(veh.passengers)
         if passengers_len < veh.capacity:
             added = True
-            print(f'Adding user {user.id} {added}')
+            #print(f'Adding user {user.id} {added}')
             self.add_passenger(user, drop_node, veh, line["nodes"])
-        print('Matching', veh.type, veh.id, f'{passengers_len}/{veh.capacity} {user.id} {added}')
+        #print('Matching', veh.type, veh.id, f'{passengers_len}/{veh.capacity} {user.id} {added}')
         return added, veh.is_public_transport()
 
     def step_maintenance(self, dt: Dt):

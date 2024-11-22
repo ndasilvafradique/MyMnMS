@@ -235,11 +235,10 @@ class Supervisor(object):
         for layer in self._mlgraph.layers.values():
             for ms in layer.mobility_services.values():
                 log.info(f' Perform matching for mobility service {ms.id}...')
-                for u in new_users:
-                    start = time()
-                    ms.launch_matching([u], self._user_flow, self._decision_model, flow_dt)
-                    end = time()
-                    log.info(f' Matching for mobility service {ms.id} done in [{end - start:.5} s]')
+                start = time()
+                ms.launch_matching(new_users, self._user_flow, self._decision_model, flow_dt)
+                end = time()
+                log.info(f' Matching for mobility service {ms.id} done in [{end - start:.5} s]')
 
     def call_flow_motor_step(self, flow_dt: Dt):
         """Calls the flow motor step and measures execution time.

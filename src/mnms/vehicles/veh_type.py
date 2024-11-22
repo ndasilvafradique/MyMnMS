@@ -215,6 +215,7 @@ class VehicleActivityServing(VehicleActivity):
          """
         self.user.vehicle = None
         veh.passengers.pop(self.user.id)
+        print('Serving', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
         self.user.remaining_link_length = 0
         upath = self.user.path.nodes
@@ -382,6 +383,18 @@ class Vehicle(TimeDependentSubject):
         if self.activity is not None:
             self.activity.done(self, tcurrent)
 
+            # if self.activity_type is not ActivityType.PICKUP or (len(self.passengers) < self.capacity):
+            #     self.activity.done(self, tcurrent)
+            # else:
+            #     to_remove = []
+            #     for a in self.activities:
+            #         if a.user is not None and a.user.id == self.activity.user.id:
+            #             print('USER ID ', a.user.id, self.activity.user.id)
+            #             to_remove.append(a)
+            #     for a in to_remove:
+            #         self.activities.remove(a)
+
+            print('Next activity', self.type, self.id, f'{len(self.passengers)}/{self.capacity}')
         try:
             activity = self.activities.popleft()
         except IndexError:
@@ -392,6 +405,7 @@ class Vehicle(TimeDependentSubject):
         if activity.activity_type is not ActivityType.STOP:
             if activity.path:
                 self._current_link, self._remaining_link_length = next(activity.iter_path)
+                # print('Activity type: ', activity.activity_type)
                 assert self._current_node == self._current_link[0], f"Veh {self.id} current node {self._current_node} is not equal to the next upstream link {self._current_link[0]}"
             else:
                 activity.is_done = True

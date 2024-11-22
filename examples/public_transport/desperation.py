@@ -96,7 +96,7 @@ if __name__ == '__main__':
     metro_service.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["METROLayer"].add_mobility_service(metro_service)
 
-    demand_file_name = indir + "/fichier_demandes.csv"
+    demand_file_name = indir + "/demandes.csv"
     demand = CSVDemandManager(demand_file_name)
     demand.add_user_observer(CSVUserObserver(outdir+"/user.csv"), user_ids="all")
 
@@ -111,4 +111,4 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('7:30:00'), Time('8:00:00'), Dt(minutes=1), 1)
+    supervisor.run(Time('7:30:00'), Time('8:45:00'), Dt(minutes=1), 1)
