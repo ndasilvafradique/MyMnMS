@@ -165,7 +165,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             travelled = 0
         veh.set_position(unode_pos+normalized_direction*travelled)
 
-    def move_veh(self, veh: Vehicle, tcurrent: Time, dt: float, speed: float) -> float:
+    def move_veh(self, veh: Vehicle, tcurrent: Time, dt: float, speed: float):
         """Move a vehicle
 
             Parameters
@@ -311,6 +311,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 speed = self.dict_speeds[res_id][veh_type]
                 veh.speed = speed
                 elapsed_time, other_users_to_replan = self.move_veh(veh, self._tcurrent, veh_dt, speed)
+                users_to_replan = users_to_replan.union(other_users_to_replan)
                 # print(veh_dt, elapsed_time)
                 next_res_id = self.get_vehicle_zone(veh)
                 if next_res_id != res_id:
@@ -322,7 +323,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             veh.notify(new_time)
             veh.notify_passengers(new_time)
 
-        return users_to_replan.union(other_users_to_replan)
+        return users_to_replan
 
     def update_reservoir_speed(self, res, dict_accumulations):
         res.update_accumulations(dict_accumulations)

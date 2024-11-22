@@ -153,7 +153,7 @@ class CongestedMFDFlowMotor(MFDFlowMotor):
     def move_veh(self, veh: Vehicle, tcurrent: Time, dt: float, speed: float) -> float:
         if isinstance(veh, Car):
             previous_veh_zone = self.get_vehicle_zone(veh)
-            elapsed_time = super(CongestedMFDFlowMotor, self).move_veh(veh, tcurrent, dt, speed)
+            elapsed_time, _ = super(CongestedMFDFlowMotor, self).move_veh(veh, tcurrent, dt, speed)
             next_veh_zone = self.get_vehicle_zone(veh)
 
             if previous_veh_zone != next_veh_zone:
@@ -178,7 +178,7 @@ class CongestedMFDFlowMotor(MFDFlowMotor):
                         passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
                     return dt
         else:
-            elapsed_time = super(CongestedMFDFlowMotor, self).move_veh(veh, tcurrent, dt, speed)
+            elapsed_time, _ = super(CongestedMFDFlowMotor, self).move_veh(veh, tcurrent, dt, speed)
 
         return elapsed_time
 
