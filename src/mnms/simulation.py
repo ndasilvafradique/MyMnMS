@@ -248,10 +248,11 @@ class Supervisor(object):
         """
         log.info(' Launch flow motor step...')
         start = time()
-        self._flow_motor.step(flow_dt)
+        users_to_replan = self._flow_motor.step(flow_dt)
         self._flow_motor.update_time(flow_dt)
         end = time()
         log.info(f' Flow motor step done in [{end - start:.5} s]')
+        return users_to_replan
 
     def step_dynamic_space_sharing(self):
         """Calls the dynamic space sharing update and reroutes vehicles impacted by
@@ -376,7 +377,13 @@ class Supervisor(object):
                 self.call_matching_mobility_services(new_users, flow_dt)
 
                 # Call flow motor step
-                self.call_flow_motor_step(flow_dt)
+                users_to_replan = self.call_flow_motor_step(flow_dt)
+                print([x for x in users_to_replan])
+                for u in users_to_replan:
+                    # Interrupt user's path but keep user in the list of user_flow
+                    u.interrupt_path(self.tcurrent)
+                self._decision_model.add_users_for_planning(list(users_to_replan), [Event.MATCH_FAILURE]*len(users_to_replan))
+
                 if self._flow_motor._write:
                     self._flow_motor.write_result(affectation_step, flow_step, flow_dt)
 

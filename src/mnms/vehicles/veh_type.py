@@ -203,6 +203,7 @@ class VehicleActivityServing(VehicleActivity):
             veh.passengers[self.user.id] = self.user
             self.user.set_state_inside_vehicle()
         self.user.notify(tcurrent)
+        print('Serving start', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
 
 

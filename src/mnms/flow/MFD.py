@@ -174,7 +174,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         """
 
         dist_travelled = dt*speed
-
+        users_to_replan = set()
         if dist_travelled > veh.remaining_link_length:
             dist_travelled = veh.remaining_link_length
             elapsed_time = dist_travelled / speed
@@ -189,11 +189,29 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 veh._remaining_link_length = remaining_link_length
             except StopIteration:
                 veh._current_node = veh.current_link[1]
-                veh.next_activity(tcurrent)
+                if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
+                    veh.next_activity(tcurrent)
+                else:
+                    if len(veh.activities) > 0:
+                        to_remove = []
+                        for a in veh.activities:
+                            if a.user is not None and a.user.id == veh.activity.user.id:
+                                print('USER ID ', a.user.id, veh.activity.user.id)
+                                users_to_replan.add(a.user)
+                                to_remove.append(a)
+                        for a in to_remove:
+                            veh.activities.remove(a)
+                        if len(veh.activities) > 0:
+                            veh.activity = veh.activities.popleft()
+                            print(veh.type, veh.id, veh.activity_type,
+                                  [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
+                                   x in veh.activities])
+                    elapsed_time = dt
                 if not veh.is_moving:
                     elapsed_time = dt
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
+            return elapsed_time, users_to_replan
             return elapsed_time
         else:
             veh._remaining_link_length -= dist_travelled
@@ -201,7 +219,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             self.set_vehicle_position(veh)
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
-            return dt
+            return dt, users_to_replan
 
     def get_vehicle_zone(self, veh):
         try:
@@ -249,11 +267,31 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
 
         # Calculate accumulations
         current_vehicles = dict()
+        users_to_replan = set()
         for veh_id, veh in self.veh_manager._vehicles.items():
             if veh.activity is None:
-                veh.next_activity(self._tcurrent)
+                if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
+                    veh.next_activity(self._tcurrent)
             while veh.activity.is_done:
-                veh.next_activity(self._tcurrent)
+                print(veh.type, veh.id, veh.activity_type, [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for x in veh.activities])
+                if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
+                    veh.next_activity(self._tcurrent)
+                else:
+                    if len(veh.activities) > 0:
+                        to_remove = []
+                        for a in veh.activities:
+                            if a.user is not None and a.user.id == veh.activity.user.id:
+                                print('USER ID ', a.user.id, veh.activity.user.id)
+                                users_to_replan.add(a.user)
+                                to_remove.append(a)
+                        for a in to_remove:
+                            veh.activities.remove(a)
+                        if len(veh.activities) > 0:
+                            veh.activity = veh.activities.popleft()
+                            print(veh.type, veh.id, veh.activity_type,
+                                  [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
+                                   x in veh.activities])
+
             if veh.is_moving:
                 self.count_moving_vehicle(veh, current_vehicles)
 
@@ -269,10 +307,12 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             veh.dt_move = None
             veh_type = veh.type.upper()
             while veh_dt > 0:
+                #print('move dt', veh_type, veh.id, veh_dt)
                 res_id = self.get_vehicle_zone(veh)
                 speed = self.dict_speeds[res_id][veh_type]
                 veh.speed = speed
-                elapsed_time = self.move_veh(veh, self._tcurrent, veh_dt, speed)
+                elapsed_time, other_users_to_replan = self.move_veh(veh, self._tcurrent, veh_dt, speed)
+                # print(veh_dt, elapsed_time)
                 next_res_id = self.get_vehicle_zone(veh)
                 if next_res_id != res_id:
                     # Vehicle exited the reservoir, register a new trip length in the left reservoir
@@ -282,6 +322,8 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             new_time = self._tcurrent.add_time(dt)
             veh.notify(new_time)
             veh.notify_passengers(new_time)
+
+        return users_to_replan.union(other_users_to_replan)
 
     def update_reservoir_speed(self, res, dict_accumulations):
         res.update_accumulations(dict_accumulations)
