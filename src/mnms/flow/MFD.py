@@ -192,12 +192,12 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
                     veh.next_activity(tcurrent)
                 else:
+                    users_to_replan.add(veh.activity.user)
                     if len(veh.activities) > 0:
                         to_remove = []
                         for a in veh.activities:
                             if a.user is not None and a.user.id == veh.activity.user.id:
                                 print('USER ID ', a.user.id, veh.activity.user.id)
-                                users_to_replan.add(a.user)
                                 to_remove.append(a)
                         for a in to_remove:
                             veh.activities.remove(a)
@@ -212,7 +212,6 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
             return elapsed_time, users_to_replan
-            return elapsed_time
         else:
             veh._remaining_link_length -= dist_travelled
             veh.update_distance(dist_travelled)
@@ -277,12 +276,12 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
                     veh.next_activity(self._tcurrent)
                 else:
+                    users_to_replan.add(veh.activity.user)
                     if len(veh.activities) > 0:
                         to_remove = []
                         for a in veh.activities:
                             if a.user is not None and a.user.id == veh.activity.user.id:
                                 print('USER ID ', a.user.id, veh.activity.user.id)
-                                users_to_replan.add(a.user)
                                 to_remove.append(a)
                         for a in to_remove:
                             veh.activities.remove(a)
