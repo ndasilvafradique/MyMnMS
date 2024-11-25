@@ -490,14 +490,12 @@ class PublicTransportMobilityService(AbstractMobilityService):
         drop_node = request.drop_node
         veh, line = self._cache_request_vehicles[user.id]
         log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self.id}')
-        '''CHECK FOR CAPACITY'''
+
         added = False
         passengers_len = len(veh.passengers)
         if passengers_len < veh.capacity:
             added = True
-            #print(f'Adding user {user.id} {added}')
             self.add_passenger(user, drop_node, veh, line["nodes"])
-        #print('Matching', veh.type, veh.id, f'{passengers_len}/{veh.capacity} {user.id} {added}')
         return added, veh.is_public_transport()
 
     def step_maintenance(self, dt: Dt):

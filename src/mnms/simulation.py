@@ -378,7 +378,7 @@ class Supervisor(object):
 
                 # Call flow motor step
                 users_to_replan = self.call_flow_motor_step(flow_dt)
-                print([x for x in users_to_replan])
+                # print([x.id for x in users_to_replan])
                 for u in users_to_replan:
                     # Interrupt user's path but keep user in the list of user_flow
                     u.interrupt_path(self.tcurrent)

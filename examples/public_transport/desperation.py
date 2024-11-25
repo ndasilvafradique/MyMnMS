@@ -111,4 +111,4 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('7:30:00'), Time('8:45:00'), Dt(minutes=1), 1)
+    supervisor.run(Time('7:30:00'), Time('8:45:00'), Dt(seconds=30), 10)

@@ -197,15 +197,14 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                         to_remove = []
                         for a in veh.activities:
                             if a.user is not None and a.user.id == veh.activity.user.id:
-                                print('USER ID ', a.user.id, veh.activity.user.id)
                                 to_remove.append(a)
                         for a in to_remove:
                             veh.activities.remove(a)
                         if len(veh.activities) > 0:
                             veh.activity = veh.activities.popleft()
-                            print(veh.type, veh.id, veh.activity_type,
-                                  [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
-                                   x in veh.activities])
+                            # print(veh.type, veh.id, veh.activity_type,
+                            #       [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
+                            #        x in veh.activities])
                     elapsed_time = dt
                 if not veh.is_moving:
                     elapsed_time = dt
@@ -272,7 +271,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
                     veh.next_activity(self._tcurrent)
             while veh.activity.is_done:
-                print(veh.type, veh.id, veh.activity_type, [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for x in veh.activities])
+                # print(veh.type, veh.id, veh.activity_type, [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for x in veh.activities])
                 if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
                     veh.next_activity(self._tcurrent)
                 else:
@@ -281,15 +280,14 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                         to_remove = []
                         for a in veh.activities:
                             if a.user is not None and a.user.id == veh.activity.user.id:
-                                print('USER ID ', a.user.id, veh.activity.user.id)
                                 to_remove.append(a)
                         for a in to_remove:
                             veh.activities.remove(a)
                         if len(veh.activities) > 0:
                             veh.activity = veh.activities.popleft()
-                            print(veh.type, veh.id, veh.activity_type,
-                                  [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
-                                   x in veh.activities])
+                            # print(veh.type, veh.id, veh.activity_type,
+                            #       [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
+                            #        x in veh.activities])
 
             if veh.is_moving:
                 self.count_moving_vehicle(veh, current_vehicles)
@@ -306,13 +304,11 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             veh.dt_move = None
             veh_type = veh.type.upper()
             while veh_dt > 0:
-                #print('move dt', veh_type, veh.id, veh_dt)
                 res_id = self.get_vehicle_zone(veh)
                 speed = self.dict_speeds[res_id][veh_type]
                 veh.speed = speed
                 elapsed_time, other_users_to_replan = self.move_veh(veh, self._tcurrent, veh_dt, speed)
                 users_to_replan = users_to_replan.union(other_users_to_replan)
-                # print(veh_dt, elapsed_time)
                 next_res_id = self.get_vehicle_zone(veh)
                 if next_res_id != res_id:
                     # Vehicle exited the reservoir, register a new trip length in the left reservoir

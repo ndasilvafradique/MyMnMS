@@ -203,7 +203,8 @@ class VehicleActivityServing(VehicleActivity):
             veh.passengers[self.user.id] = self.user
             self.user.set_state_inside_vehicle()
         self.user.notify(tcurrent)
-        print('Serving start', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
+        if veh.is_public_transport():
+            print('Serving start', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
 
 
@@ -216,7 +217,8 @@ class VehicleActivityServing(VehicleActivity):
          """
         self.user.vehicle = None
         veh.passengers.pop(self.user.id)
-        print('Serving', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
+        if veh.is_public_transport():
+            print('Serving done', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
         self.user.remaining_link_length = 0
         upath = self.user.path.nodes
@@ -395,7 +397,8 @@ class Vehicle(TimeDependentSubject):
             #     for a in to_remove:
             #         self.activities.remove(a)
 
-            print('Next activity', self.type, self.id, f'{len(self.passengers)}/{self.capacity}')
+            if self.is_public_transport() and len(self.passengers) > 0:
+                print('Next activity', self.type, self.id, f'{len(self.passengers)}/{self.capacity}')
         try:
             activity = self.activities.popleft()
         except IndexError:

@@ -33,7 +33,7 @@ class UserState(Enum):
 
 
 class User(TimeDependentSubject):
-    default_response_dt = Dt(minutes=2)
+    default_response_dt = Dt(minutes=10)
     default_pickup_dt = Dt(minutes=5)
 
     def __init__(self,
