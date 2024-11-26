@@ -59,17 +59,23 @@ def load_capacity_info(capacity_file):
     return capacity_info
 
 
+def force_public_transport(demand_file):
+    demand_data = pd.read_csv(demand_file, sep=';')
+    demand_data['DESTINATION'] = '843236.118951 6517919.311414'
+    # demand_data['PATH'] = ' '
+    if 'MOBILITY SERVICES' not in demand_data.columns:
+        demand_data['MOBILITY SERVICES'] = 'METRO TRAM BUS'
+    demand_data.to_csv(demand_file, sep=';', index=False)
+
+
 if __name__ == '__main__':
     NX = 10
     NY = 10
     DIST_CONNECTION = 1e2
 
     mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
-
     odlayer = generate_bbox_origin_destination_layer(mmgraph.roads, NX, NY)
-
     mmgraph.add_origin_destination_layer(odlayer)
-
     mmgraph.connect_origindestination_layers(100, 1000)
 
     # if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
@@ -97,6 +103,7 @@ if __name__ == '__main__':
     mmgraph.layers["METROLayer"].add_mobility_service(metro_service)
 
     demand_file_name = indir + "/demandes.csv"
+    force_public_transport(demand_file_name)
     demand = CSVDemandManager(demand_file_name)
     demand.add_user_observer(CSVUserObserver(outdir+"/user.csv"), user_ids="all")
 
@@ -112,3 +119,4 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     supervisor.run(Time('7:30:00'), Time('8:45:00'), Dt(seconds=30), 10)
+

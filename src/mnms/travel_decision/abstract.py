@@ -1,6 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
-from typing import List, Set, Dict, Callable
+from typing import List, Set, Dict, Callable, Tuple
 from collections import defaultdict
 from enum import Enum
 import csv

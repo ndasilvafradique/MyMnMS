@@ -369,7 +369,8 @@ class Supervisor(object):
                 # Call user flow step
                 users_reach_dt_answer = self.call_user_flow_step(flow_dt, users_step)
                 self._decision_model.add_users_for_planning(users_reach_dt_answer, [Event.MATCH_FAILURE]*len(users_reach_dt_answer))
-                print('USER FLOW STEP', [x for x in users_reach_dt_answer])
+                if len(users_reach_dt_answer):
+                    print('DEMAND', [x for x in users_reach_dt_answer])
 
                 # Call dynamic space sharing step
                 self.step_dynamic_space_sharing()
