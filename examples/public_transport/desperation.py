@@ -85,14 +85,14 @@ def force_public_transport(demand_file):
 
 
 if __name__ == '__main__':
-    NX = 10
-    NY = 10
+    NX = 50
+    NY = 50
     DIST_CONNECTION = 1e2
 
     mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
     odlayer = generate_bbox_origin_destination_layer(mmgraph.roads, NX, NY)
     mmgraph.add_origin_destination_layer(odlayer)
-    mmgraph.connect_origindestination_layers(100, 1000)
+    mmgraph.connect_origindestination_layers(500, 1000)
 
     # if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
     #     mmgraph.connect_origin_destination_layer(DIST_CONNECTION)
