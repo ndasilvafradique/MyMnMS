@@ -23,24 +23,26 @@ outdir = "OUTPUTS"
 set_mnms_logger_level(LOGLEVEL.INFO, ["mnms.simulation"])
 
 #get_logger("mnms.graph.shortest_path").setLevel(LOGLEVEL.WARNING)
-attach_log_file(outdir+'/simulation.log')
+attach_log_file(outdir + '/simulation.log')
+
 
 # 'DESTINATION_R_82604106' 'ORIGIN_E_83202447'
 
 def calculate_V_MFD(acc):
     #V = 10.3*(1-N/57000) # data from fit prop
-    V = 0 # data from fit dsty
+    V = 0  # data from fit dsty
     N = acc["CAR"]
-    if N<18000:
-        V=11.5-N*6/18000
-    elif N<55000:
-        V=11.5-6 - (N-18000)*4.5/(55000-18000)
-    elif N<80000:
-        V= 11.5-6-4.5-(N-55000)*1/(80000-55000)
+    if N < 18000:
+        V = 11.5 - N * 6 / 18000
+    elif N < 55000:
+        V = 11.5 - 6 - (N - 18000) * 4.5 / (55000 - 18000)
+    elif N < 80000:
+        V = 11.5 - 6 - 4.5 - (N - 55000) * 1 / (80000 - 55000)
     #V = 11.5*(1-N/60000)
-    V = max(V,0.001) # min speed to avoid gridlock
+    V = max(V, 0.001)  # min speed to avoid gridlock
     V_TRAM_BUS = 0.7 * V
     return {"CAR": V, "METRO": 17, "BUS": V_TRAM_BUS, "TRAM": V_TRAM_BUS}
+
 
 def load_capacity_info(capacity_file):
     print("Loading capacity info from {}".format(capacity_file))
@@ -60,9 +62,23 @@ def load_capacity_info(capacity_file):
 
 
 def force_public_transport(demand_file):
+    print('Forcing public transport from {}'.format(demand_file))
     demand_data = pd.read_csv(demand_file, sep=';')
-    demand_data['DESTINATION'] = '843236.118951 6517919.311414'
-    # demand_data['PATH'] = ' '
+    if 'PATH' in demand_data.columns:
+        demand_data = demand_data.drop(columns=['PATH'])
+    if 'CHOSEN SERVICES' in demand_data.columns:
+        demand_data = demand_data.drop(columns=['CHOSEN SERVICES'])
+    demand_data['ORIGIN'] = '846073.08 6517678.81'
+    demand_data['DESTINATION'] = '842387.30 6519213.73'
+    for i, row in demand_data.iterrows():
+        if int(i) % 2 != 0:
+            path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_BachutMairiedu8eme TRAM_T2_DIR2_TRAM_T2_DIR2_Villon TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
+            demand_data.loc[i, 'PATH'] = path
+            demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
+        else:
+            path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
+            demand_data.loc[i, 'PATH'] = path
+            demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
     if 'MOBILITY SERVICES' not in demand_data.columns:
         demand_data['MOBILITY SERVICES'] = 'METRO TRAM BUS'
     demand_data.to_csv(demand_file, sep=';', index=False)
@@ -105,12 +121,12 @@ if __name__ == '__main__':
     demand_file_name = indir + "/demandes.csv"
     force_public_transport(demand_file_name)
     demand = CSVDemandManager(demand_file_name)
-    demand.add_user_observer(CSVUserObserver(outdir+"/user.csv"), user_ids="all")
+    demand.add_user_observer(CSVUserObserver(outdir + "/user.csv"), user_ids="all")
 
-    flow_motor = MFDFlowMotor(outfile=outdir+"/flow.csv")
+    flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
-    travel_decision = LogitDecisionModel(mmgraph, outfile=outdir+"/path.csv")
+    travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,
@@ -119,4 +135,3 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     supervisor.run(Time('7:30:00'), Time('8:45:00'), Dt(seconds=30), 10)
-

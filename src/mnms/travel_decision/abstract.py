@@ -515,6 +515,7 @@ class AbstractDecisionModel(ABC):
             if user_paths:
                 ## Some paths have been found
                 chosen_path = self.path_choice(user_paths)
+                # print(f'User {user.id} chosen path {chosen_path}')
                 log.info(f"User {user.id} chose path {chosen_path} after {event} among {len(user_paths)} shortest paths for this round of (re)planning (state={user.state}).")
 
                 if self._write:
