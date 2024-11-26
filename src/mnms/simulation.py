@@ -402,7 +402,7 @@ class Supervisor(object):
             for vehicle_id in VehicleManager._vehicles:
                 CI = len(VehicleManager._vehicles[vehicle_id].passengers)/VehicleManager._vehicles[vehicle_id].capacity
                 node = VehicleManager._vehicles[vehicle_id].current_node
-                f.write(f'{str(self.tcurrent)},{type},{vehicle_id},{CI},{node}\n')
+                f.write(f'{str(self.tcurrent)},{vehicle_id},{CI},{node}\n')
 
             if self._write:
                 log.info('Writing costs of each link in graph ...')

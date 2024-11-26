@@ -40,7 +40,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                 )
         self._seed = None
         self._rng = None
-        self.CI_data = pd.read_csv('OUTPUTS/congestion_file.csv')
+        self.CI_data = pd.read_csv('OUTPUTS/congestion_file_backup.csv')
 
 
     def set_random_seed(self, seed):
@@ -76,7 +76,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
 
     def get_CI(self, node, tcurrent):
-        CI = self.CI_data[(self.CI_data['node'] == node) & (self.CI_data['tcurrent'] == tcurrent)]
+        CI = self.CI_data[(self.CI_data['NODE'] == node) & (self.CI_data['TIMESTAMP'] == tcurrent)]
         return CI
 
     def get_BI(self, node, tcurrent):
