@@ -59,7 +59,7 @@ class LogitDecisionModel(AbstractDecisionModel):
             rng = np.random.default_rng(self._seed)
             self._rng = rng
 
-    def path_choice(self, paths:List[Path]) -> Path:
+    def path_choice(self, paths:List[Path], tcurrent=None) -> Path:
         """Method that proceeds to the selection of the path.
 
         Args:
@@ -68,6 +68,8 @@ class LogitDecisionModel(AbstractDecisionModel):
         Returns:
             -selected_path: path chosen
         """
+
+
         sum_cost_exp = 0
         theta = self._theta
         while sum_cost_exp == 0:
@@ -127,7 +129,7 @@ class ModeCentricLogitDecisionModel(AbstractDecisionModel):
             rng = np.random.default_rng(self._seed)
             self._rng = rng
 
-    def path_choice(self, paths:List[Path]) -> Path:
+    def path_choice(self, paths:List[Path], tcurrent=None) -> Path:
         # Group paths per considered modes
         grouped_paths = {}
         for mi, m in enumerate(self._considered_modes):

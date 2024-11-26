@@ -1,3 +1,4 @@
+import os
 from math import ceil
 from time import time
 import csv
@@ -330,6 +331,9 @@ class Supervisor(object):
         self.tcurrent = tstart
         progress = ProgressBar(ceil((tend-tstart).to_seconds()/(flow_dt.to_seconds()*affectation_factor)))
 
+        f = open(f'OUTPUTS{os.sep}congestion_file.csv', 'w')
+        f.write('TIMESTAMP,VEHICLE ID,CONGESTION INDEX,NODE\n')
+
         ### Main loop
         while self.tcurrent < tend:
             progress.update()
@@ -395,6 +399,11 @@ class Supervisor(object):
             ## Call the update graph
             self.call_update_graph(update_graph_threshold)
 
+            for vehicle_id in VehicleManager._vehicles:
+                CI = len(VehicleManager._vehicles[vehicle_id].passengers)/VehicleManager._vehicles[vehicle_id].capacity
+                node = VehicleManager._vehicles[vehicle_id].current_node
+                f.write(f'{str(self.tcurrent)},{type},{vehicle_id},{CI},{node}\n')
+
             if self._write:
                 log.info('Writing costs of each link in graph ...')
                 start = time()
@@ -410,6 +419,7 @@ class Supervisor(object):
             affectation_step += 1
 
         ### Finalize simulation
+        f.close()
         if self._user_flow._write:
             self._user_flow.write_result()
         self.finalize()

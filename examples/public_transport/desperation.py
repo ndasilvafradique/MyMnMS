@@ -6,6 +6,7 @@ from mnms.flow.MFD import Reservoir, MFDFlowMotor
 from mnms.log import attach_log_file, LOGLEVEL, get_logger, set_all_mnms_logger_level, set_mnms_logger_level
 from mnms.time import Time, Dt
 from mnms.io.graph import load_graph, load_odlayer
+from mnms.travel_decision.behavior_and_congestion_decision_model import BehaviorCongestionDecisionModel
 from mnms.travel_decision.logit import LogitDecisionModel
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
 from mnms.generation.layers import generate_bbox_origin_destination_layer
@@ -70,29 +71,29 @@ def force_public_transport(demand_file):
         demand_data = demand_data.drop(columns=['CHOSEN SERVICES'])
     demand_data['ORIGIN'] = '846073.08 6517678.81'
     demand_data['DESTINATION'] = '842387.30 6519213.73'
-    for i, row in demand_data.iterrows():
-        if int(i) % 2 != 0:
-            path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_BachutMairiedu8eme TRAM_T2_DIR2_TRAM_T2_DIR2_Villon TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
-            demand_data.loc[i, 'PATH'] = path
-            demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
-        else:
-            path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
-            demand_data.loc[i, 'PATH'] = path
-            demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
+    # for i, row in demand_data.iterrows():
+    #     if int(i) % 2 != 0:
+    #         path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_BachutMairiedu8eme TRAM_T2_DIR2_TRAM_T2_DIR2_Villon TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
+    #         demand_data.loc[i, 'PATH'] = path
+    #         demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
+    #     else:
+    #         path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
+    #         demand_data.loc[i, 'PATH'] = path
+    #         demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
     if 'MOBILITY SERVICES' not in demand_data.columns:
         demand_data['MOBILITY SERVICES'] = 'METRO TRAM BUS'
     demand_data.to_csv(demand_file, sep=';', index=False)
 
 
 if __name__ == '__main__':
-    NX = 50
-    NY = 50
+    NX = 10
+    NY = 10
     DIST_CONNECTION = 1e2
 
     mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
     odlayer = generate_bbox_origin_destination_layer(mmgraph.roads, NX, NY)
     mmgraph.add_origin_destination_layer(odlayer)
-    mmgraph.connect_origindestination_layers(500, 1000)
+    mmgraph.connect_origindestination_layers(100, 1000)
 
     # if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
     #     mmgraph.connect_origin_destination_layer(DIST_CONNECTION)
@@ -126,7 +127,7 @@ if __name__ == '__main__':
     flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
-    travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
+    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv")
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,
