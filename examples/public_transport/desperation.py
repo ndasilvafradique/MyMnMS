@@ -127,7 +127,7 @@ if __name__ == '__main__':
     flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
-    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv")
+    travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,
