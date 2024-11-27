@@ -396,13 +396,14 @@ class Supervisor(object):
                 self.tcurrent = self.tcurrent.add_time(flow_dt)
                 flow_step += 1
 
+                for vehicle_id in VehicleManager._vehicles:
+                    CI = len(VehicleManager._vehicles[vehicle_id].passengers) / VehicleManager._vehicles[
+                        vehicle_id].capacity
+                    node = VehicleManager._vehicles[vehicle_id].current_node
+                    f.write(f'{str(self.tcurrent)},{vehicle_id},{CI},{node}\n')
+
             ## Call the update graph
             self.call_update_graph(update_graph_threshold)
-
-            for vehicle_id in VehicleManager._vehicles:
-                CI = len(VehicleManager._vehicles[vehicle_id].passengers)/VehicleManager._vehicles[vehicle_id].capacity
-                node = VehicleManager._vehicles[vehicle_id].current_node
-                f.write(f'{str(self.tcurrent)},{vehicle_id},{CI},{node}\n')
 
             if self._write:
                 log.info('Writing costs of each link in graph ...')
