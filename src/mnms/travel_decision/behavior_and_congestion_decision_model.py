@@ -42,6 +42,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               )
         self._seed = None
         self._rng = None
+        assert cost=='travel_time'
         self.CI_data = pd.read_csv('OUTPUTS/congestion_file_backup.csv')
         self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
 
@@ -70,8 +71,20 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
         # base cost
         for path in paths:
+            score = 0
+            path_tt = path.link_cost.values()
             # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
-            score = sum((1 - self.get_CI(x, tcurrent)) + self.get_BI(x, tcurrent) + (1 - self.get_C(x, tcurrent)) for x in path.nodes[1:2])
+            i = 0
+            line = paths.nodes[1].split('_')[0]
+            for x in paths.nodes[1:-1]:
+                if i == 0:
+                    t = tcurrent
+                else:
+                    next_line = x.split('_')[0]
+                    if line != next_line:
+                        t = sum(path_tt[:i])
+                score += 1 - self.get_CI(x, t) + self.get_BI(x, t) + 1 - self.get_C(x, t)
+                i+=1
             path_score.append(score)
 
         return paths[np.argmax(path_score)] if len(path_score) > 0 else None
@@ -85,6 +98,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
         return CI['CONGESTION INDEX'][0]
 
+
++
 
     def get_BI(self, node, tcurrent):
         return 1

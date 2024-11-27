@@ -823,6 +823,7 @@ class Path(object):
         self.layers: List[Tuple[str, slice]] = list()
         self.mobility_services = list()
         self.service_costs = dict()
+        self.link_cost = dict()
 
     def set_mobility_services(self, ms):
         self.mobility_services = ms
@@ -892,7 +893,9 @@ class Path(object):
             for j in range(sl.start, sl.stop-1):
                 un = self.nodes[j]
                 dn = self.nodes[j+1]
-                path_cost += mlgraph.graph.nodes[un].adj[dn].costs[ms][cost]
+                c = mlgraph.graph.nodes[un].adj[dn].costs[ms][cost]
+                path_cost += c
+                self.link_cost[f'{un}_{dn}'] = c
         self.path_cost = path_cost
 
     def increment_path_cost(self, additional_cost):
