@@ -80,7 +80,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                 if i == 0:
                     t = tcurrent
                 else:
-                    next_line = x.split('_')[0]
+                    next_line = x.split('_')[0] + x.split('_')[1]
                     if line != next_line:
                         t = sum(path_tt[:i])
                         line = next_line
@@ -100,7 +100,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         return CI['CONGESTION INDEX'][0]
 
 
-+
+
 
     def get_BI(self, node, tcurrent):
         return 1
