@@ -92,12 +92,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         tcurrent_datetime = pd.to_datetime(str(tcurrent))
         CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
         CI = CI[CI['time_diff'] >= 0]
-        CI = CI.sort_values(by='time_diff').reset_index(drop=True, inplace=False)
+        CI = CI.sort_values(by=['time_diff', 'CONGESTION INDEX']).reset_index(drop=True, inplace=False)
         print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
         return CI['CONGESTION INDEX'][0]
-
-
-
 
     def get_BI(self, node, tcurrent):
         return 1
