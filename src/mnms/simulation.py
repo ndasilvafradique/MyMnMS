@@ -20,7 +20,7 @@ from mnms.time import Time, Dt
 from mnms.log import create_logger, attach_log_file, LOGLEVEL
 from mnms.tools.progress import ProgressBar
 from mnms.vehicles.manager import VehicleManager
-from mnms.vehicles.veh_type import Vehicle
+from mnms.vehicles.veh_type import Vehicle, ActivityType
 
 log = create_logger(__name__)
 
@@ -400,7 +400,9 @@ class Supervisor(object):
                     CI = len(VehicleManager._vehicles[vehicle_id].passengers) / VehicleManager._vehicles[
                         vehicle_id].capacity
                     node = VehicleManager._vehicles[vehicle_id].current_node
-                    f.write(f'{str(self.tcurrent)},{vehicle_id},{CI},{node}\n')
+                    if (VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.REPOSITIONING and
+                            VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.STOP):
+                        f.write(f'{str(self.tcurrent)},{vehicle_id},{CI},{node}\n')
 
             ## Call the update graph
             self.call_update_graph(update_graph_threshold)

@@ -26,8 +26,10 @@ for _, row in df.iterrows():
     # couple target - time_bin as the field and BI as the value
     target = row['target']
     time_bin = row['time_bin']
+    # Extract hour and minute from time_bin
+    hour_minute = time_bin.split(' ')[1][:5]  # Extract HH:mm
     BI = row['BI']
 
     # Add the time_bin -> BI pair to the hash
-    redis_client.hset(hash_key, f"{target}-{time_bin}", BI)
+    redis_client.hset(hash_key, f"{target}-{hour_minute}", BI)
 

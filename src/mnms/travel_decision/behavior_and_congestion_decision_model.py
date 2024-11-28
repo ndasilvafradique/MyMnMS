@@ -77,14 +77,11 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             i = 0
             line = paths.nodes[1].split('_')[0]
             for x in paths.nodes[1:-1]:
-                if i == 0:
-                    t = tcurrent
-                else:
-                    next_line = x.split('_')[0] + x.split('_')[1]
-                    if line != next_line:
-                        t = sum(path_tt[:i])
-                        line = next_line
-                score += 1 - self.get_CI(x, t) + self.get_BI(x, t) + 1 - self.get_C(x, t)
+                next_line = x.split('_')[0] + x.split('_')[1]
+                if line != next_line or i == 0:
+                    t = sum(path_tt[:i]) + tcurrent
+                    line = next_line
+                    score += 1 - self.get_CI(x, t) + self.get_BI(x, t) + 1 - self.get_C(x, t)
                 i+=1
             path_score.append(score)
 
