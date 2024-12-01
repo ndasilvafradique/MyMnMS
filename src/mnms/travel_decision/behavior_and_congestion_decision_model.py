@@ -42,10 +42,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               )
         self._seed = None
         self._rng = None
-        assert cost=='travel_time'
+        assert cost == 'travel_time'
         self.CI_data = pd.read_csv('OUTPUTS/congestion_file_backup.csv')
         self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
-
 
     def set_random_seed(self, seed):
         """Method that sets the random seed for this decision model.
@@ -73,6 +72,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         for path in paths:
             score = 0
             path_tt = path.link_cost.values()
+            max_cost = np.max(path_tt)
             # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
             i = 0
             line = paths.nodes[1].split('_')[0]
@@ -81,8 +81,11 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                 if line != next_line or i == 0:
                     t = sum(path_tt[:i]) + tcurrent
                     line = next_line
-                    score += 1 - self.get_CI(x, t) + self.get_BI(x, t) + 1 - self.get_C(x, t)
-                i+=1
+                    score += 1 - self.get_CI(x, t) + self.get_BI(x, t)
+                # TO CHECK
+                C = path.link_cost[x] / max_cost
+                score += C
+                i += 1
             path_score.append(score)
 
         return paths[np.argmax(path_score)] if len(path_score) > 0 else None
@@ -96,9 +99,5 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
         return CI['CONGESTION INDEX'][0]
 
-    def get_BI(self, node, tcurrent):
-        return 1
-
-    def get_C(self, node, tcurrent):
-        '''TO DO'''
+    def get_BI(self, x, tcurrent):
         return 1
