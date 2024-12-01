@@ -68,11 +68,18 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         """
         path_score = []
 
+        # EXTRACT THE LONGEST LINK AMONG ALL PATHS
+        max_cost = 0
+        for path in paths:
+            path_tt = path.link_cost.values()
+            longest_link = np.max(path_tt)
+            if longest_link > max_cost:
+                max_cost = longest_link
+
         # base cost
         for path in paths:
             score = 0
             path_tt = path.link_cost.values()
-            max_cost = np.max(path_tt)
             # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
             i = 0
             line = paths.nodes[1].split('_')[0]
