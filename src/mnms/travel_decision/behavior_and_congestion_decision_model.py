@@ -16,7 +16,7 @@ log = create_logger(__name__)
 
 class BehaviorCongestionDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
-                 verbose_file=False):
+                 verbose_file=False, alpha=1):
         """Behavior- and congestion-driven decision model for the path of a user.
         All routes computed are considered on an equal footing for the choice.
 
@@ -39,9 +39,11 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               cost=cost,
                                                               outfile=outfile,
                                                               verbose_file=verbose_file,
+                                                              alpha=alpha
                                                               )
         self._seed = None
         self._rng = None
+        self.alpha = alpha
         assert cost == 'travel_time'
         self.CI_data = pd.read_csv('OUTPUTS/congestion_file_backup.csv')
         self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
@@ -88,7 +90,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                 if line != next_line or i == 0:
                     t = sum(path_tt[:i]) + tcurrent
                     line = next_line
-                    score += 1 - self.get_CI(x, t) + self.get_BI(x, t)
+                    score += self.alpha * (1 - self.get_CI(x, t)) + (1 - self.alpha) * self.get_BI(x, t)
                 # TO CHECK
                 C = path.link_cost[x] / max_cost
                 score += C
