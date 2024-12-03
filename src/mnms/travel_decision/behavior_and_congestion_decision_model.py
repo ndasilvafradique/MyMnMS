@@ -74,13 +74,13 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         """
         path_score = []
 
-        # EXTRACT THE LONGEST LINK AMONG ALL PATHS
-        max_cost = 0
+        # EXTRACT THE LONGEST PATH AMONG ALL PATHS
+        max_path_cost = 0
         for path in paths:
             path_tt = path.link_cost.values()
-            longest_link = np.max(path_tt)
-            if longest_link > max_cost:
-                max_cost = longest_link
+            path_cost = sum(path_tt)
+            if path_cost > max_path_cost:
+                max_path_cost = path_cost
 
         # base cost
         for path in paths:
@@ -97,8 +97,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                     score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(x, t)
                 # TO CHECK
                 i += 1
-            C = sum(path_tt) / max_cost
-            score += self.gamma * C
+            C = sum(path_tt) / max_path_cost
+            score += self.gamma * (1 - C)
             path_score.append(score)
 
         return paths[np.argmax(path_score)] if len(path_score) > 0 else None
