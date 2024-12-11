@@ -1,18 +1,21 @@
 import os
+import time
+
+import numpy as np
 
 from mnms.simulation import Supervisor
 from mnms.demand import CSVDemandManager
 from mnms.flow.MFD import Reservoir, MFDFlowMotor
-from mnms.log import attach_log_file, LOGLEVEL, get_logger, set_all_mnms_logger_level, set_mnms_logger_level
+from mnms.log import attach_log_file, LOGLEVEL, set_mnms_logger_level
 from mnms.time import Time, Dt
-from mnms.io.graph import load_graph, load_odlayer
+from mnms.io.graph import load_graph, load_odlayer, save_graph, save_odlayer, save_transit_link_odlayer, \
+    load_transit_links
 from mnms.travel_decision.behavior_and_congestion_decision_model import BehaviorCongestionDecisionModel
 from mnms.travel_decision.logit import LogitDecisionModel
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
 from mnms.generation.layers import generate_bbox_origin_destination_layer
 from mnms.mobility_service.personal_vehicle import PersonalMobilityService
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
-from mnms.io.graph import save_transit_link_odlayer, load_transit_links
 import json
 
 import pandas as pd
@@ -57,32 +60,16 @@ def load_capacity_info(capacity_file):
                 for k in range(len(layer['LINES'])):
                     veh = layer['LINES'][k]['ID']
                     capacity_info[veh] = layer['LINES'][k]['CAPACITY']
-                    capacity_info[veh] = 10
-
     return capacity_info
 
 
 def force_public_transport(demand_file):
     print('Forcing public transport from {}'.format(demand_file))
     demand_data = pd.read_csv(demand_file, sep=';')
-    if 'PATH' in demand_data.columns:
-        demand_data = demand_data.drop(columns=['PATH'])
-    if 'CHOSEN SERVICES' in demand_data.columns:
-        demand_data = demand_data.drop(columns=['CHOSEN SERVICES'])
-    demand_data['ORIGIN'] = '846073.08 6517678.81'
-    demand_data['DESTINATION'] = '842387.30 6519213.73'
-    # for i, row in demand_data.iterrows():
-    #     if int(i) % 2 != 0:
-    #         path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_BachutMairiedu8eme TRAM_T2_DIR2_TRAM_T2_DIR2_Villon TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
-    #         demand_data.loc[i, 'PATH'] = path
-    #         demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
-    #     else:
-    #         path = 'ORIGIN_55 TRAM_T2_DIR2_TRAM_T2_DIR2_JetdEauMFrance TRAM_T2_DIR2_TRAM_T2_DIR2_RoutedeVienne TRAM_T2_DIR2_TRAM_T2_DIR2_GaribaldiBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_JeanMace TRAM_T2_DIR2_TRAM_T2_DIR2_CentreBerthelot TRAM_T2_DIR2_TRAM_T2_DIR2_Perrache TRAM_T2_DIR2_TRAM_T2_DIR2_PlacedesArchives TRAM_T2_DIR2_TRAM_T2_DIR2_SainteBlandine TRAM_T2_DIR2_TRAM_T2_DIR2_HotelRegionMontrochet DESTINATION_54'
-    #         demand_data.loc[i, 'PATH'] = path
-    #         demand_data.loc[i, 'CHOSEN SERVICES'] = 'TRANSIT:WALK ' + 'TRAMLayer:TRAM ' * path.count('TRAM') + 'TRANSIT:WALK'
+    print('N queries:', len(demand_data), 'N users:', len(np.unique(demand_data['ID'])))
     if 'MOBILITY SERVICES' not in demand_data.columns:
         demand_data['MOBILITY SERVICES'] = 'METRO TRAM BUS'
-    demand_data.to_csv(demand_file, sep=';', index=False)
+        demand_data.to_csv(demand_file, sep=';', index=False)
 
 
 if __name__ == '__main__':
@@ -91,15 +78,23 @@ if __name__ == '__main__':
     DIST_CONNECTION = 1e2
 
     mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
+    start_time = time.time()
     odlayer = generate_bbox_origin_destination_layer(mmgraph.roads, NX, NY)
-    mmgraph.add_origin_destination_layer(odlayer)
-    mmgraph.connect_origindestination_layers(100, 1000)
+    mmgraph.odlayer = odlayer
+    end_time = time.time()
+    print('OD LAYER CREATION', end_time - start_time, 's')
 
-    # if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
-    #     mmgraph.connect_origin_destination_layer(DIST_CONNECTION)
-    #     save_transit_link_odlayer(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
-    # else:
-    #     load_transit_links(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
+    # start_time = time.time()
+    mmgraph.add_origin_destination_layer(odlayer)
+    # mmgraph.connect_origindestination_layers(500, 1000)
+    # end_time = time.time()
+    # print('MMGRAPH LAYER CREATION', end_time - start_time, 's')
+
+    if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
+        mmgraph.connect_origindestination_layers(DIST_CONNECTION)
+        save_transit_link_odlayer(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
+    else:
+        load_transit_links(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
 
     personal_car = PersonalMobilityService()
     personal_car.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
@@ -119,7 +114,7 @@ if __name__ == '__main__':
     metro_service.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["METROLayer"].add_mobility_service(metro_service)
 
-    demand_file_name = indir + "/demandes.csv"
+    demand_file_name = indir + "/demand_custom.csv"
     force_public_transport(demand_file_name)
     demand = CSVDemandManager(demand_file_name)
     demand.add_user_observer(CSVUserObserver(outdir + "/user.csv"), user_ids="all")
@@ -135,4 +130,7 @@ if __name__ == '__main__':
                             decision_model=travel_decision,
                             outfile=outdir + "/travel_time_link.csv")
 
-    supervisor.run(Time('7:30:00'), Time('8:45:00'), Dt(seconds=30), 10)
+    start = time.time()
+    supervisor.run(Time('16:40:00'), Time('17:00:00'), Dt(seconds=30), 10)
+    end = time.time()
+    print(f'SIMULATION COMPLETED IN {end-start} s')
