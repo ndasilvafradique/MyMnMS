@@ -84,6 +84,7 @@ if __name__ == '__main__':
     end_time = time.time()
     print('OD LAYER CREATION', end_time - start_time, 's')
 
+    ##
     # start_time = time.time()
     mmgraph.add_origin_destination_layer(odlayer)
     # mmgraph.connect_origindestination_layers(500, 1000)
