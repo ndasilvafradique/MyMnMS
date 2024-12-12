@@ -303,7 +303,7 @@ class TimeTable(object):
             return np.mean(waiting_times_seconds)
         else:
             log.warning("TimeTable has no Time and cant compute a frequency")
-            return None
+            return 24 * 60 * 60 # wait 24 hours at least
     def __add__(self, other):
         return TimeTable(self.table + other.table)
 

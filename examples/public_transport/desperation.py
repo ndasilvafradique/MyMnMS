@@ -73,8 +73,8 @@ def force_public_transport(demand_file):
 
 
 if __name__ == '__main__':
-    NX = 10
-    NY = 10
+    NX = 100
+    NY = 100
     DIST_CONNECTION = 1e2
 
     mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
@@ -92,8 +92,8 @@ if __name__ == '__main__':
     # print('MMGRAPH LAYER CREATION', end_time - start_time, 's')
 
     if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
-        mmgraph.connect_origindestination_layers(DIST_CONNECTION)
-        save_transit_link_odlayer(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
+        mmgraph.connect_origindestination_layers(500,1000)
+        save_transit_link_odlayer(mmgraph, indir + f"/transit_link_{NX}_{NY}_{500}_grid.json")
     else:
         load_transit_links(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
 
@@ -132,6 +132,6 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     start = time.time()
-    supervisor.run(Time('16:40:00'), Time('17:00:00'), Dt(seconds=30), 10)
+    supervisor.run(Time('16:41:00'), Time('20:30:00'), Dt(seconds=30), 10)
     end = time.time()
     print(f'SIMULATION COMPLETED IN {end-start} s')
