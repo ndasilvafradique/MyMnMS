@@ -75,7 +75,7 @@ def force_public_transport(demand_file):
 if __name__ == '__main__':
     NX = 100
     NY = 100
-    DIST_CONNECTION = 1e2
+    #DIST_CONNECTION = 1e2
 
     mmgraph = load_graph(indir + "/lyon_network_gtfs_mod.json")
     start_time = time.time()
@@ -91,11 +91,14 @@ if __name__ == '__main__':
     # end_time = time.time()
     # print('MMGRAPH LAYER CREATION', end_time - start_time, 's')
 
-    if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json"):
+    if not os.path.exists(indir + f"/transit_link_{NX}_{NY}_{500}_grid.json"):
         mmgraph.connect_origindestination_layers(500,1000)
         save_transit_link_odlayer(mmgraph, indir + f"/transit_link_{NX}_{NY}_{500}_grid.json")
     else:
-        load_transit_links(mmgraph, indir + f"/transit_link_{NX}_{NY}_{DIST_CONNECTION}_grid.json")
+        start_time = time.time()
+        load_transit_links(mmgraph, indir + f"/transit_link_{NX}_{NY}_{500}_grid.json")
+        end_time = time.time()
+        print('MMGRAPH LAYER UPLOADING', end_time - start_time, 's')
 
     personal_car = PersonalMobilityService()
     personal_car.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
@@ -123,7 +126,8 @@ if __name__ == '__main__':
     flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
-    travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
+    #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
+    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=0, beta=0)
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,

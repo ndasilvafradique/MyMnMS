@@ -39,9 +39,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               cost=cost,
                                                               outfile=outfile,
                                                               verbose_file=verbose_file,
-                                                              alpha=alpha,
-                                                              beta=beta,
-                                                              gamma=gamma
+                                                              #alpha=alpha,
+                                                              #beta=beta,
+                                                              #gamma=gamma
                                                               )
         self._seed = None
         self._rng = None
@@ -49,8 +49,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         self.beta = beta
         self.gamma = gamma
         assert cost == 'travel_time'
-        self.CI_data = pd.read_csv('OUTPUTS/congestion_file_backup.csv')
-        self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
+        if self.alpha != 0:
+            self.CI_data = pd.read_csv('OUTPUTS/congestion_file_backup.csv')
+            self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
 
     def set_random_seed(self, seed):
         """Method that sets the random seed for this decision model.
@@ -88,15 +89,16 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             path_tt = path.link_cost.values()
             # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
             i = 0
-            line = paths.nodes[1].split('_')[0]
-            for x in paths.nodes[1:-1]:
-                next_line = x.split('_')[0] + x.split('_')[1]
-                if line != next_line or i == 0:
-                    t = sum(path_tt[:i]) + tcurrent
-                    line = next_line
-                    score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(x, t)
-                # TO CHECK
-                i += 1
+            if self.alpha != 0 and self.beta != 0:
+                line = path.nodes[1].split('_')[0]
+                for x in path.nodes[1:-1]:
+                    next_line = x.split('_')[0] + x.split('_')[1]
+                    if line != next_line or i == 0:
+                        t = sum(path_tt[:i]) + tcurrent
+                        line = next_line
+                        score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(x, t)
+                    # TO CHECK
+                    i += 1
             C = sum(path_tt) / max_path_cost
             score += self.gamma * (1 - C)
             path_score.append(score)
