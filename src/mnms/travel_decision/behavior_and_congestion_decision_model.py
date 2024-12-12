@@ -80,8 +80,12 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         for path in paths:
             path_tt = path.link_cost.values()
             path_cost = sum(path_tt)
+            print(path)
+            print(path_tt)
+            print(path_cost)
             if path_cost > max_path_cost:
                 max_path_cost = path_cost
+                
 
         # base cost
         for path in paths:
