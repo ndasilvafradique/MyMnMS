@@ -375,6 +375,8 @@ class PublicTransportMobilityService(AbstractMobilityService):
 
         pu_node_ind = line_nodes.index(user.current_node)
         do_node_ind = line_nodes.index(drop_node)
+        print("PU NODE IND", pu_node_ind)
+        print("DO NODE IND", do_node_ind)
 
         assert pu_node_ind <= do_node_ind, f'Pickup index {pu_node_ind} should necessarily take place '\
             f'before dropoff index {do_node_ind} on the public transport line for User {user.id}.'
@@ -388,14 +390,20 @@ class PublicTransportMobilityService(AbstractMobilityService):
         else:
             activities_including_curr = [a for a in veh.activities]
         ind_pu = -1
+        ind_do = -1
         for ind, activity in enumerate(activities_including_curr):
             activity_node = activity.node
             activity_node_ind = line_nodes.index(activity_node)
+            print("IND", ind)
+            print("ACTIVITY NODE", activity_node)
+            print("ACTIVITY NODE IND", activity_node_ind)
             if pu_node_ind <= activity_node_ind and ind_pu == -1:
                 ind_pu = ind
-            if do_node_ind <= activity_node_ind:
+            if do_node_ind <= activity_node_ind and ind_do == -1:
                 ind_do = ind
                 break # if we found dropoff we necessarily have found pickup before
+        if ind_do == -1:
+            ind_do = len(activities_including_curr)
 
         # Insert the activities corresponding to pickup and serving in vehicles' activities
         _insert_in_activity(user.current_node, ind_pu, drop_node, ind_do, user, veh)
