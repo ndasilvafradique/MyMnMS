@@ -823,7 +823,6 @@ class Path(object):
         self.layers: List[Tuple[str, slice]] = list()
         self.mobility_services = list()
         self.service_costs = dict()
-        self.link_cost = dict()
 
     def set_mobility_services(self, ms):
         self.mobility_services = ms
@@ -895,8 +894,20 @@ class Path(object):
                 dn = self.nodes[j+1]
                 c = mlgraph.graph.nodes[un].adj[dn].costs[ms][cost]
                 path_cost += c
-                self.link_cost[f'{un}_{dn}'] = c
+                self.link_cost.append(c)
         self.path_cost = path_cost
+
+    def get_link_cost(self, mlgraph, cost):
+        link_cost = []
+        for i, (lid, sl) in enumerate(self.layers):
+            ms = self.mobility_services[i]
+            for j in range(sl.start, sl.stop - 1):
+                un = self.nodes[j]
+                dn = self.nodes[j + 1]
+                c = mlgraph.graph.nodes[un].adj[dn].costs[ms][cost]
+                link_cost.append(c)
+        return link_cost
+
 
     def increment_path_cost(self, additional_cost):
         """Method that adds an additional cost value to the current path cost.

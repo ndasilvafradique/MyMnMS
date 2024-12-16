@@ -48,12 +48,26 @@ def _insert_in_activity(pu_node, ind_pu, do_node, ind_do, user, veh):
             # activity_to_modify have begun, pickup activity path should start
             # at vehicle current node
             start_ind_inpath = veh.path_to_nodes(activity_to_modify.path).index(veh._current_node)
+            print("START NODE", start_ind_inpath)
         else:
             # activity_to_modify has not begun, pickup activity path should start
             # at the beginning of activity_to_modify path
             start_ind_inpath = 0
         # Deduce pickup and serving activities
+        print("ACTIVITY TO MODIFY PATH", activity_to_modify.path)
+        if start_ind_inpath == pu_ind_inpath:
+            pu_ind_inpath = pu_ind_inpath + 1
+            
         pu_path = activity_to_modify.path[start_ind_inpath:pu_ind_inpath]
+        #if start_ind_inpath == pu_ind_inpath:
+        #    pu_path = activity_to_modify.path[start_ind_inpath:pu_ind_inpath+1]
+        print("PU IND INPATH", pu_ind_inpath)
+        print("DO IND INPATH", do_ind_inpath)
+        print("PATH", pu_path)
+        
+        if pu_ind_inpath == do_ind_inpath:
+            do_ind_inpath = do_ind_inpath + 1
+        
         do_path = activity_to_modify.path[pu_ind_inpath:do_ind_inpath]
         pu_activity = VehicleActivityPickup(node=pu_node,
                                             path=pu_path,
@@ -61,6 +75,7 @@ def _insert_in_activity(pu_node, ind_pu, do_node, ind_do, user, veh):
         do_activity = VehicleActivityServing(node=do_node,
                                             path=do_path,
                                             user=user)
+        print("PU ACTIVITY", pu_activity)
         # Modify activity_to_modify
         activity_to_modify.modify_path(activity_to_modify.path[do_ind_inpath:])
         # Insert the new activities and the modified one
@@ -104,11 +119,16 @@ def _insert_in_activity(pu_node, ind_pu, do_node, ind_do, user, veh):
             veh.activities.insert(ind_do, do_activity)
         # Then insert pickup activity
         activity_to_modify_pu = activities_including_curr[ind_pu]
+        print("IN ELSE, ACTIVITY TO MODIFY PU", activity_to_modify_pu)
         pu_ind_inpath = veh.path_to_nodes(activity_to_modify_pu.path).index(pu_node)
         if ind_pu == 0:
             start_ind_inpath = veh.path_to_nodes(activity_to_modify_pu.path).index(veh._current_node)
         else:
             start_ind_inpath = 0
+            
+        if start_ind_inpath == pu_ind_inpath:
+            pu_ind_inpath = pu_ind_inpath + 1
+            
         pu_path = activity_to_modify_pu.path[start_ind_inpath:pu_ind_inpath]
         pu_activity = VehicleActivityPickup(node=pu_node,
                                             path=pu_path,
@@ -403,7 +423,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
                 ind_do = ind
                 break # if we found dropoff we necessarily have found pickup before
         if ind_do == -1:
-            ind_do = len(activities_including_curr)
+            ind_do = ind
 
         # Insert the activities corresponding to pickup and serving in vehicles' activities
         _insert_in_activity(user.current_node, ind_pu, drop_node, ind_do, user, veh)

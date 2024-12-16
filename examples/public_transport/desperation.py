@@ -136,6 +136,6 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     start = time.time()
-    supervisor.run(Time('16:41:00'), Time('20:30:00'), Dt(seconds=30), 10)
+    supervisor.run(Time('17:20:00'), Time('17:50:00'), Dt(seconds=30), 10)
     end = time.time()
     print(f'SIMULATION COMPLETED IN {end-start} s')

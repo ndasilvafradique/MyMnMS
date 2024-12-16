@@ -409,7 +409,7 @@ class Vehicle(TimeDependentSubject):
         if activity.activity_type is not ActivityType.STOP:
             if activity.path:
                 self._current_link, self._remaining_link_length = next(activity.iter_path)
-                # print('Activity type: ', activity.activity_type)
+                print('Activity type: ', activity.activity_type, activity)
                 assert self._current_node == self._current_link[0], f"Veh {self.id} current node {self._current_node} is not equal to the next upstream link {self._current_link[0]}"
             else:
                 activity.is_done = True

@@ -78,11 +78,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         # EXTRACT THE LONGEST PATH AMONG ALL PATHS
         max_path_cost = 0
         for path in paths:
-            path_tt = path.link_cost.values()
             path_cost = path.path_cost
-            #print(path)
-            #print(path_tt)
-            #print(path_cost)
             if path_cost > max_path_cost:
                 max_path_cost = path_cost
                 
@@ -90,7 +86,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         # base cost
         for path in paths:
             score = 0
-            path_tt = path.link_cost.values()
+            path_tt = path.get_link_cost(self._mlgraph, self._cost)
             # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
             i = 0
             if self.alpha != 0 and self.beta != 0:
