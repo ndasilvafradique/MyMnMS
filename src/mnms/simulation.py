@@ -387,6 +387,7 @@ class Supervisor(object):
                 for u in users_to_replan:
                     # Interrupt user's path but keep user in the list of user_flow
                     u.interrupt_path(self.tcurrent)
+                    print('replan', u)
                 self._decision_model.add_users_for_planning(list(users_to_replan), [Event.INTERRUPTION]*len(users_to_replan))
 
                 if self._flow_motor._write:
