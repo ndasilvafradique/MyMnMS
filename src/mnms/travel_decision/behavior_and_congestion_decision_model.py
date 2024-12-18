@@ -4,12 +4,19 @@ from typing import List, Tuple
 
 import numpy as np
 
+from examples.public_transport.INPUTS.redis_reader import get_current_time_bin
+from examples.public_transport.prova import clean_route
 from mnms import create_logger
 from mnms.demand.user import Path
 from mnms.time import Time
 from mnms.travel_decision.abstract import AbstractDecisionModel
 from mnms.graph.layers import MultiLayerGraph
 import pandas as pd
+import redis
+from datetime import datetime, timedelta
+import time
+import re
+
 
 log = create_logger(__name__)
 
@@ -43,6 +50,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               #beta=beta,
                                                               #gamma=gamma
                                                               )
+        # Connect to Redis (adjust host and port)
+        self.redis_client = redis.StrictRedis(host='137.121.163.115', port=6379, decode_responses=True)
+
         self._seed = None
         self._rng = None
         self.alpha = alpha
@@ -64,7 +74,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             rng = np.random.default_rng(self._seed)
             self._rng = rng
 
-    def path_choice(self, paths: List[Path], tcurrent) -> Path:
+    def path_choice(self, paths: List[Path], uid, tcurrent=None) -> Path:
         """Method that proceeds to the selection of the path.
 
         Args:
@@ -96,7 +106,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                     if line != next_line or i == 0:
                         t = sum(path_tt[:i]) + tcurrent
                         line = next_line
-                        score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(x, t)
+                        score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(uid, x, t)
                     # TO CHECK
                     i += 1
             C = path.path_cost / max_path_cost
@@ -114,5 +124,25 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
         return CI['CONGESTION INDEX'][0]
 
-    def get_BI(self, x, tcurrent):
-        return 1
+    def get_BI(self, uid, x, tcurrent):
+        user = uid
+        bin = get_current_time_bin(tcurrent)
+        target = f'{clean_route(x)}-{bin}'
+
+        BI_value = self.redis_client.hget(user, target)
+        if BI_value is None:
+            BI_value = 0
+        return BI_value
+
+
+    def get_current_time_bin(tcurrent, bin_minutes=10):
+        # Calculate the start of the bin
+        bin_start = tcurrent - timedelta(minutes=tcurrent.minute % bin_minutes, seconds=tcurrent.second, microseconds=tcurrent.microsecond)
+        return bin_start.strftime("%H:%M")
+
+    def clean_route(route):
+        # Rimuove tutto ciò che si trova tra due occorrenze di DIRx (incluso DIRx)
+        route = re.sub(r'_DIR\d+.*?_DIR\d+', '', route, flags=re.IGNORECASE)
+        # Converte tutto in maiuscolo
+        route = route.upper()
+        return route

@@ -16,13 +16,14 @@ def get_current_time_bin(tcurrent, bin_minutes=10):
     bin_start = tcurrent - timedelta(minutes=tcurrent.minute % bin_minutes, seconds=tcurrent.second, microseconds=tcurrent.microsecond)
 
     # Return the bin as a formatted string
-    return bin_start.strftime("%Y-%m-%d %H:%M:%S")
+    return bin_start.strftime("%H:%M")
 
-#now = datetime.now()   # Replace with tcurrent
-#time_bin = get_current_time_bin(now, bin_minutes=10)
+now = datetime.now()   # Replace with tcurrent
+time_bin = get_current_time_bin(now, bin_minutes=10)
+print(time_bin)
 
 user = "30303030303036330018B7C27651636EED8FA067D7392487B994DB5599A1E3D2"
-target = "TRAM_T4_LABORELLE-10:11"
+target = f"TRAM_T4_LABORELLE-{time_bin}"
 
 target2 = "TRAM_T4_LABORELLE-10:10"
 
