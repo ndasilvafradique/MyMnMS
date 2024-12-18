@@ -4,8 +4,6 @@ from typing import List, Tuple
 
 import numpy as np
 
-from examples.public_transport.INPUTS.redis_reader import get_current_time_bin
-from examples.public_transport.prova import clean_route
 from mnms import create_logger
 from mnms.demand.user import Path
 from mnms.time import Time
