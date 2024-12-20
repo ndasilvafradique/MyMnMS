@@ -5,7 +5,7 @@ import time
 
 
 # Connect to Redis (adjust host and port)
-redis_client = redis.StrictRedis(host='137.121.163.115', port=6379, decode_responses=True)
+redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
 
 
 ## Reading from Redis

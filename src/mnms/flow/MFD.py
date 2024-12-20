@@ -199,6 +199,10 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                             if a.user is not None and a.user.id == veh.activity.user.id:
                                 to_remove.append(a)
                         for a in to_remove:
+                            path = a.path
+                            ind_next = veh.activities.index(a) + 1
+                            # ind_next is the activity to modify adding the path. The next activity always exist since there are stop or serving final activities
+                            veh.activities[ind_next].modify_path(path + veh.activities[ind_next].path)
                             veh.activities.remove(a)
                         if len(veh.activities) > 0:
                             veh.activity = veh.activities.popleft()
@@ -282,7 +286,13 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                             if a.user is not None and a.user.id == veh.activity.user.id:
                                 to_remove.append(a)
                         for a in to_remove:
+                            path = a.path
+                            ind_next = veh.activities.index(a) + 1
+                            # ind_next is the activity to modify adding the path. The next activity always exist since there are stop or serving final activities
+                            veh.activities[ind_next].modify_path(path + veh.activities[ind_next].path)
                             veh.activities.remove(a)
+
+                            print('veh id', veh.id, 'activities', veh.activities)
                         if len(veh.activities) > 0:
                             veh.activity = veh.activities.popleft()
                             # print(veh.type, veh.id, veh.activity_type,
