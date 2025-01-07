@@ -127,7 +127,9 @@ if __name__ == '__main__':
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
-    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=0, beta=1, gamma=0)
+    # 74-01 sto rilanciando il test su baseline behavior_1641
+    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=1, beta=1, gamma=1, #congestion_file_path='SIMULATION_BASELINE_BEHAVIOR_noPathMod/congestion_file.csv')
+    congestion_file_path='SIMULATION_BASELINE_BEHAVIOR_1641/congestion_file.csv')
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,
@@ -136,6 +138,6 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     start = time.time()
-    supervisor.run(Time('16:44:00'), Time('20:00:00'), Dt(seconds=30), 10)
+    supervisor.run(Time('16:41:00'), Time('20:00:00'), Dt(seconds=30), 10)
     end = time.time()
     print(f'SIMULATION COMPLETED IN {end-start} s')

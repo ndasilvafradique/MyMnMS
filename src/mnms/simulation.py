@@ -332,7 +332,7 @@ class Supervisor(object):
         progress = ProgressBar(ceil((tend-tstart).to_seconds()/(flow_dt.to_seconds()*affectation_factor)))
 
         f = open(f'OUTPUTS{os.sep}congestion_file.csv', 'w')
-        f.write('TIMESTAMP,VEHICLE ID,CONGESTION INDEX,NODE\n')
+        f.write('TIMESTAMP,VEHICLE ID,PASSENGERS,CAPACITY,CONGESTION INDEX,NODE\n')
 
         ### Main loop
         while self.tcurrent < tend:
@@ -398,12 +398,13 @@ class Supervisor(object):
                 flow_step += 1
 
                 for vehicle_id in VehicleManager._vehicles:
-                    CI = len(VehicleManager._vehicles[vehicle_id].passengers) / VehicleManager._vehicles[
-                        vehicle_id].capacity
+                    passengers = len(VehicleManager._vehicles[vehicle_id].passengers)
+                    capacity = VehicleManager._vehicles[vehicle_id].capacity
+                    CI =  passengers/capacity
                     node = VehicleManager._vehicles[vehicle_id].current_node
                     if (VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.REPOSITIONING and
                             VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.STOP):
-                        f.write(f'{str(self.tcurrent)},{vehicle_id},{CI},{node}\n')
+                        f.write(f'{str(self.tcurrent)},{vehicle_id},{passengers},{capacity},{CI},{node}\n')
 
             ## Call the update graph
             self.call_update_graph(update_graph_threshold)

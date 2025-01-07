@@ -21,7 +21,7 @@ log = create_logger(__name__)
 
 class BehaviorCongestionDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
-                 verbose_file=False, alpha=1, beta=1, gamma=1):
+                 verbose_file=False, alpha=1, beta=1, gamma=1, congestion_file_path=None):
         """Behavior- and congestion-driven decision model for the path of a user.
         All routes computed are considered on an equal footing for the choice.
 
@@ -44,9 +44,6 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               cost=cost,
                                                               outfile=outfile,
                                                               verbose_file=verbose_file,
-                                                              #alpha=alpha,
-                                                              #beta=beta,
-                                                              #gamma=gamma
                                                               )
         # Connect to Redis (adjust host and port)
         self.redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
@@ -58,7 +55,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         self.gamma = gamma
         assert cost == 'travel_time'
         #if self.alpha != 0:
-        self.CI_data = pd.read_csv('OUTPUTS/congestion_cost.csv')
+        self.CI_data = pd.read_csv(congestion_file_path)
         self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
 
     def set_random_seed(self, seed):
@@ -111,7 +108,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                         next_line = x.split('_')[0] + x.split('_')[1]
                         if line != next_line or i == 0:
                             t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent), '%H:%M:%S.%f')
-                            print(str(tcurrent), sum(path_tt[:i]), t)
+                            #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30) 
+                            #print(str(tcurrent), sum(path_tt[:i]), t)
                             line = next_line
                             score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(uid, x, t)
                             if i != 0:

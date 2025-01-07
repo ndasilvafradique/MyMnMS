@@ -202,6 +202,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                             path = a.path
                             ind_next = veh.activities.index(a) + 1
                             # ind_next is the activity to modify adding the path. The next activity always exist since there are stop or serving final activities
+                            
                             veh.activities[ind_next].modify_path(path + veh.activities[ind_next].path)
                             veh.activities.remove(a)
                         if len(veh.activities) > 0:
