@@ -38,14 +38,21 @@ class CongestionModel:
         return data.rolling(window=window).mean()
 
     def predict_congestion(self, node):
-        CI = self.data[self.data['NODE'] == node].copy(deep=True)
-        if len(CI) != 0:
-            CI = self.data[self.data['NODE']]
-            if self.prediction_technique[0] == 'temporal_moving_avg' or None:
-                CI = self.temporal_moving_average(CI['CONGESTION INDEX'], self.prediction_technique[1]['window'])
-                return CI
-        else:
+        CI = self.data[self.data['NODE'] == node]
+
+        # If no data is available for the node, return 0
+        if CI.empty:
             return 0
+
+        # Apply temporal moving average if technique is specified
+        if self.prediction_technique[0] == 'temporal_moving_avg':
+            window = self.prediction_technique[1].get('window', 1)  # Default to window=1 if not provided
+            # Compute rolling mean
+            CI['CONGESTION INDEX MA'] = CI['CONGESTION INDEX'].rolling(window=window).mean()
+            return CI['CONGESTION INDEX MA'].iloc[-1]
+
+        # Default return if no technique applies
+        return CI['CONGESTION INDEX'].iloc[-1]
 
     def clear_data(self):
         """
