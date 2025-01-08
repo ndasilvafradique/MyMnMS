@@ -29,7 +29,7 @@ def _insert_in_activity(pu_node, ind_pu, do_node, ind_do, user, veh):
         -user: user to pick-up and drop-off
         -veh: vehicle which will pick-up and drop-off user
     """
-    print('PU NODE', pu_node, '- IND PU', ind_pu, ' - DO NODE', do_node, ' - IND DO', ind_do)
+    print('PU NODE', pu_node, '- IND PU', ind_pu, ' - DO NODE', do_node, ' - IND DO', ind_do, '- USER', user)
     if veh.activity is not None and veh.activity.activity_type is not ActivityType.STOP:
         activities_including_curr = [veh.activity] + [a for a in veh.activities]
         decrement_insert_index = True
@@ -648,6 +648,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         user = request.user
         drop_node = request.drop_node
+        print('MATCHING - request DROP NODE', drop_node)
         veh, line = self._cache_request_vehicles[user.id]
         log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self.id}')
 

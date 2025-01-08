@@ -21,7 +21,8 @@ log = create_logger(__name__)
 
 class BehaviorCongestionDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
-                 verbose_file=False, alpha=1, beta=1, gamma=1, congestion_file_path=None):
+                 verbose_file=False, alpha=1, beta=1, gamma=1, congestion_file_path=None,
+                 baseline=False, top_k=3, n_shortest_path=10):
         """Behavior- and congestion-driven decision model for the path of a user.
         All routes computed are considered on an equal footing for the choice.
 
@@ -44,6 +45,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               cost=cost,
                                                               outfile=outfile,
                                                               verbose_file=verbose_file,
+                                                              n_shortest_path=n_shortest_path
                                                               )
         # Connect to Redis (adjust host and port)
         self.redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
@@ -78,49 +80,63 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         Returns:
             -selected_path: path chosen
         """
-        path_score = []
-        
-        # EXTRACT THE LONGEST PATH AMONG ALL PATHS
-        max_path_cost = 0
-        for path in paths:
-            path_cost = path.path_cost
-            if path_cost > max_path_cost:
-                max_path_cost = path_cost
-                
+        print('N PATHS:', len(paths))
+        if len(paths) > 1:
+            cost_score = [p.path_cost for p in paths]
+            CI_score = [0 * len(paths)]
+            BI_score = [0 * len(paths)]
 
-        # base cost
-        for path in paths:
-            score = 0
-            path_tt = path.get_link_cost(self._mlgraph, self._cost)
-            # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
-            i = 0
-            line_changes = 1
-            if self.alpha != 0 or self.beta != 0:
-                x = path.nodes[1]
-                # Get line ID. Ex. TRAMT5
-                if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
-                    line = x.split('_')[0] + x.split('_')[1]
-                else:
-                    line = ''
-                for x in path.nodes[1:-1]:
-                    print('X', x)
+            for p in range(len(paths)):
+                path_tt = paths[p].get_link_cost(self._mlgraph, self._cost)
+                # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
+                i = 0
+                line_changes = 1
+                if self.alpha != 0 or self.beta != 0:
+                    x = paths[p].nodes[1]
+                    # Get line ID. Ex. TRAMT5
                     if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
-                        next_line = x.split('_')[0] + x.split('_')[1]
-                        if line != next_line or i == 0:
-                            t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent), '%H:%M:%S.%f')
-                            #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30) 
-                            #print(str(tcurrent), sum(path_tt[:i]), t)
-                            line = next_line
-                            score += self.alpha * (1 - self.get_CI(x, t)) + self.beta * self.get_BI(uid, x, t)
-                            if i != 0:
-                                line_changes = line_changes + 1
-                    i += 1
-                score = score/line_changes
-            C = path.path_cost / max_path_cost
-            score += self.gamma * (1 - C)
-            path_score.append(score)
+                        line = x.split('_')[0] + x.split('_')[1]
+                    else:
+                        line = ''
+                    for x in paths[p].nodes[1:-1]:
+                        print('X', x)
+                        if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
+                            next_line = x.split('_')[0] + x.split('_')[1]
+                            if line != next_line or i == 0:
+                                t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent), '%H:%M:%S.%f')
+                                #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
+                                #print(str(tcurrent), sum(path_tt[:i]), t)
+                                line = next_line
+                                CI_score[p] += self.alpha * self.get_CI(x, t)
+                                BI_score[p] += self.beta * self.get_BI(uid, x, t)
+                                if i != 0:
+                                    line_changes = line_changes + 1
+                        i += 1
+                    CI_score[p] = CI_score[p]/line_changes
+                    BI_score[p] = BI_score[p]/line_changes
 
-        return paths[np.argmax(path_score)] if len(path_score) > 0 else None
+            # Create a DataFrame
+            ranked_paths = pd.DataFrame({
+                'Cost_score': cost_score,
+                'BI_score': BI_score,
+                'CI_score': CI_score
+            })
+
+            print('RANKED PATHS:', ranked_paths)
+            if self.baseline:
+                # Find the best rank position across all three criteria for each object
+                ranked_paths = ranked_paths.sort_values(by=["BI_score", "Cost_score"],
+                                                        ascending=[True, False])
+            else:
+                ranked_paths = ranked_paths.sort_values(by=["BI_score", "CI_score", "Cost_score"],
+                                                        ascending=[True, False])
+
+            ranked_paths = ranked_paths.iloc[:self.top_k, :]
+            return paths[ranked_paths.index[np.random.randint(low=0, high=len(ranked_paths)+1)]]
+        elif len(paths) == 1:
+            return paths[0]
+        else:
+            return None
 
     def get_CI(self, node, tcurrent):
         print(node, tcurrent)
