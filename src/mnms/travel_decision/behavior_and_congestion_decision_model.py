@@ -55,6 +55,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
+        self.baseline = baseline
+        self.top_k = top_k
         assert cost == 'travel_time'
         #if self.alpha != 0:
         self.CI_data = pd.read_csv(congestion_file_path)
@@ -83,8 +85,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         print('N PATHS:', len(paths))
         if len(paths) > 1:
             cost_score = [p.path_cost for p in paths]
-            CI_score = [0 * len(paths)]
-            BI_score = [0 * len(paths)]
+            CI_score = [0 for i in range(len(paths))]
+            BI_score = [0 for i in range(len(paths))]
 
             for p in range(len(paths)):
                 path_tt = paths[p].get_link_cost(self._mlgraph, self._cost)
@@ -107,51 +109,62 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                 #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
                                 #print(str(tcurrent), sum(path_tt[:i]), t)
                                 line = next_line
-                                CI_score[p] += self.alpha * self.get_CI(x, t)
-                                BI_score[p] += self.beta * self.get_BI(uid, x, t)
+                                CI_score[p] += self.get_CI(x, t)
+                                BI_score[p] += self.get_BI(uid, x, t)
                                 if i != 0:
                                     line_changes = line_changes + 1
                         i += 1
-                    CI_score[p] = CI_score[p]/line_changes
-                    BI_score[p] = BI_score[p]/line_changes
+                    CI_score[p] = self.alpha * CI_score[p]/line_changes
+                    BI_score[p] = self.beta * BI_score[p]/line_changes
 
-            # Create a DataFrame
-            ranked_paths = pd.DataFrame({
-                'Cost_score': cost_score,
-                'BI_score': BI_score,
-                'CI_score': CI_score
-            })
-
-            print('RANKED PATHS:', ranked_paths)
             if self.baseline:
-                # Find the best rank position across all three criteria for each object
-                ranked_paths = ranked_paths.sort_values(by=["BI_score", "Cost_score"],
-                                                        ascending=[True, False])
+                criteria = {'BI': (BI_score, True), 'C': (cost_score, False)}
             else:
-                ranked_paths = ranked_paths.sort_values(by=["BI_score", "CI_score", "Cost_score"],
-                                                        ascending=[True, False])
-
-            ranked_paths = ranked_paths.iloc[:self.top_k, :]
+                criteria = {'CI': (CI_score, False), 'BI': (BI_score, True), 'C': (cost_score, False)}
+            # CREATE C RANKS AND SORT PATH. THEN COMBINE THE SCORE BASED ON VALUE AND POSITION WITHIN THE RANKS
+            # AND GET THE TOP K
+            ranked_paths = self.rank_paths(criteria, len(paths)).iloc[:self.top_k, :]
             return paths[ranked_paths.index[np.random.randint(low=0, high=len(ranked_paths)+1)]]
         elif len(paths) == 1:
             return paths[0]
         else:
             return None
 
+    def rank_paths(self, criteria, P):
+        rankings = [
+            pd.DataFrame({'ID': list(range(P)), c: criteria[c][0]}).sort_values(by=c, ascending=criteria[c][1]).reset_index(
+                drop=True)
+            for c in criteria]
+        ranked_paths = pd.DataFrame({'ID': list(range(P)), 'SCORE': [0] * P})
+        for p in range(P):
+            for rank in rankings:
+                p = rank[rank['ID'] == p]
+                ranked_paths.iloc[p, 1] += p.iloc[0, 1] * (p.index[0] + 1)  # VALUE * POSITION
+        return ranked_paths
+
+    def simple_moving_average(data, window):
+        series = pd.Series(data)
+        return series.rolling(window=window).mean()
+
     def get_CI(self, node, tcurrent):
         print(node, tcurrent)
         CI = self.CI_data[self.CI_data['NODE'] == node].copy(deep=True)
         if len(CI) == 0:
             return 0
-        tcurrent_datetime = pd.to_datetime(str(tcurrent))
-        CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
-        CI = CI[CI['time_diff'] >= 0]
-        CI = CI.sort_values(by=['time_diff', 'CONGESTION INDEX']).reset_index(drop=True, inplace=False)
-        if len(CI) == 0:
-            return 0
         else:
-            print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
-            return CI['CONGESTION INDEX'][0]
+            return 1
+
+
+
+        # tcurrent_datetime = pd.to_datetime(str(tcurrent))
+        # CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
+        # CI = CI[CI['time_diff'] >= 0]
+        # CI = CI.sort_values(by=['time_diff', 'CONGESTION INDEX']).reset_index(drop=True, inplace=False)
+        # if len(CI) == 0:
+        #     return 0
+        # else:
+        #     print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
+        #     return CI['CONGESTION INDEX'][0]
 
     def get_BI(self, uid, x, tcurrent):
         user = uid
