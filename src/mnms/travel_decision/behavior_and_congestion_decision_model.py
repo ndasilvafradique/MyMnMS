@@ -135,14 +135,20 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             pd.DataFrame({'ID': list(range(P)), c: criteria[c][0]}).sort_values(by=c, ascending=criteria[c][1]).reset_index(
                 drop=True)
             for c in criteria]
-        ranked_paths = pd.DataFrame({'ID': list(range(P)), 'SCORE': [0] * P})
-        for p in range(P):
+        ranked_paths = pd.DataFrame({'ID': list(range(P)), 'SCORE': [0.0] * P})
+
+        for r in rankings:
+            print(r)
+
+        print(ranked_paths)
+
+        for p in ranked_paths.index:
             for rank in rankings:
-                p = rank[rank['ID'] == p]
-                ranked_paths.iloc[p, 1] += p.iloc[0, 1] * (p.index[0] + 1)  # VALUE * POSITION
+                path = rank[rank['ID'] == p]
+                ranked_paths.iloc[p, 1] += path.iloc[0, 1] * (path.index[0] + 1)  # VALUE * POSITION
         return ranked_paths
 
-    def simple_moving_average(data, window):
+    def simple_moving_average(self, data, window):
         series = pd.Series(data)
         return series.rolling(window=window).mean()
 
@@ -152,9 +158,10 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         if len(CI) == 0:
             return 0
         else:
-            return 1
-
-
+            window = 60
+            CI = self.simple_moving_average(CI['CONGESTION INDEX'], window)
+            print('CI', tcurrent)
+            return CI
 
         # tcurrent_datetime = pd.to_datetime(str(tcurrent))
         # CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
