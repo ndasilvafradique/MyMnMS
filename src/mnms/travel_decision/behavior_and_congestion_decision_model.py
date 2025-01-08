@@ -5,6 +5,7 @@ from typing import List, Tuple
 import numpy as np
 
 from mnms import create_logger
+from mnms.congestion_model import CongestionModel
 from mnms.demand.user import Path
 from mnms.time import Time
 from mnms.travel_decision.abstract import AbstractDecisionModel
@@ -15,14 +16,14 @@ from datetime import datetime, timedelta
 import time
 import re
 
-
 log = create_logger(__name__)
 
 
 class BehaviorCongestionDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
-                 verbose_file=False, alpha=1, beta=1, gamma=1, congestion_file_path=None,
-                 baseline=False, top_k=3, n_shortest_path=10):
+                 verbose_file=False, alpha=1, beta=1, gamma=1,
+                 baseline=False, top_k=3, n_shortest_path=10,
+                 congestion_prediction_technique=None):
         """Behavior- and congestion-driven decision model for the path of a user.
         All routes computed are considered on an equal footing for the choice.
 
@@ -58,9 +59,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         self.baseline = baseline
         self.top_k = top_k
         assert cost == 'travel_time'
-        #if self.alpha != 0:
-        self.CI_data = pd.read_csv(congestion_file_path)
-        self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
+        self.congestion_prediction_technique = congestion_prediction_technique
+        #self.CI_data = pd.read_csv(congestion_file_path)
+        #self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
 
     def set_random_seed(self, seed):
         """Method that sets the random seed for this decision model.
@@ -105,7 +106,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                         if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
                             next_line = x.split('_')[0] + x.split('_')[1]
                             if line != next_line or i == 0:
-                                t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent), '%H:%M:%S.%f')
+                                t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent),
+                                                                                            '%H:%M:%S.%f')
                                 #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
                                 #print(str(tcurrent), sum(path_tt[:i]), t)
                                 line = next_line
@@ -114,8 +116,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                 if i != 0:
                                     line_changes = line_changes + 1
                         i += 1
-                    CI_score[p] = self.alpha * CI_score[p]/line_changes
-                    BI_score[p] = self.beta * BI_score[p]/line_changes
+                    CI_score[p] = self.alpha * CI_score[p] / line_changes
+                    BI_score[p] = self.beta * BI_score[p] / line_changes
 
             if self.baseline:
                 criteria = {'BI': (BI_score, True), 'C': (cost_score, False)}
@@ -124,7 +126,10 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             # CREATE C RANKS AND SORT PATH. THEN COMBINE THE SCORE BASED ON VALUE AND POSITION WITHIN THE RANKS
             # AND GET THE TOP K
             ranked_paths = self.rank_paths(criteria, len(paths)).iloc[:self.top_k, :]
-            return paths[ranked_paths.index[np.random.randint(low=0, high=len(ranked_paths)+1)]]
+            random_path = ranked_paths.iloc[np.random.randint(low=0, high=len(ranked_paths)), 0]
+            print('Path', random_path, paths)
+            random_path = paths[random_path]
+            return random_path
         elif len(paths) == 1:
             return paths[0]
         else:
@@ -132,15 +137,16 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
     def rank_paths(self, criteria, P):
         rankings = [
-            pd.DataFrame({'ID': list(range(P)), c: criteria[c][0]}).sort_values(by=c, ascending=criteria[c][1]).reset_index(
+            pd.DataFrame({'ID': list(range(P)), c: criteria[c][0]}).sort_values(by=c,
+                                                                                ascending=criteria[c][1]).reset_index(
                 drop=True)
             for c in criteria]
         ranked_paths = pd.DataFrame({'ID': list(range(P)), 'SCORE': [0.0] * P})
 
-        for r in rankings:
-            print(r)
-
-        print(ranked_paths)
+        # for r in rankings:
+        #     print(r)
+        #
+        # print(ranked_paths)
 
         for p in ranked_paths.index:
             for rank in rankings:
@@ -148,30 +154,26 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                 ranked_paths.iloc[p, 1] += path.iloc[0, 1] * (path.index[0] + 1)  # VALUE * POSITION
         return ranked_paths
 
-    def simple_moving_average(self, data, window):
-        series = pd.Series(data)
-        return series.rolling(window=window).mean()
-
-    def get_CI(self, node, tcurrent):
-        print(node, tcurrent)
-        CI = self.CI_data[self.CI_data['NODE'] == node].copy(deep=True)
-        if len(CI) == 0:
-            return 0
-        else:
-            window = 60
-            CI = self.simple_moving_average(CI['CONGESTION INDEX'], window)
-            print('CI', tcurrent)
-            return CI
-
-        # tcurrent_datetime = pd.to_datetime(str(tcurrent))
-        # CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
-        # CI = CI[CI['time_diff'] >= 0]
-        # CI = CI.sort_values(by=['time_diff', 'CONGESTION INDEX']).reset_index(drop=True, inplace=False)
+    def get_CI(self, node):
+        return CongestionModel.get_instance(self.congestion_prediction_technique).predict_congestion(node)
+        # print(node, tcurrent)
+        # CI = self.CI_data[self.CI_data['NODE'] == node].copy(deep=True)
         # if len(CI) == 0:
         #     return 0
         # else:
-        #     print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
-        #     return CI['CONGESTION INDEX'][0]
+        #     # tcurrent_datetime = pd.to_datetime(str(tcurrent))
+        #     # CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
+        #     # CI = CI[CI['time_diff'] >= 0]
+        #     # CI = CI.sort_values(by=['time_diff', 'CONGESTION INDEX']).reset_index(drop=True, inplace=False)
+        #     # if len(CI) == 0:
+        #     #     return 0
+        #     # else:
+        #     #     print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
+        #     #     return CI['CONGESTION INDEX'][0]
+        #     window = 60
+        #     CI = self.simple_moving_average(CI['CONGESTION INDEX'], window)
+        #     print('CI', tcurrent)
+        #     return CI
 
     def get_BI(self, uid, x, tcurrent):
         user = uid
@@ -184,10 +186,10 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         print('BI', BI_value)
         return float(BI_value)
 
-
     def get_current_time_bin(self, tcurrent, bin_minutes=10):
         # Calculate the start of the bin
-        bin_start = tcurrent - timedelta(minutes=tcurrent.minute % bin_minutes, seconds=tcurrent.second, microseconds=tcurrent.microsecond)
+        bin_start = tcurrent - timedelta(minutes=tcurrent.minute % bin_minutes, seconds=tcurrent.second,
+                                         microseconds=tcurrent.microsecond)
         return bin_start.strftime("%H:%M")
 
     def clean_route(self, route):

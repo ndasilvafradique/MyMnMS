@@ -8,6 +8,7 @@ from typing import List, Optional
 
 import numpy as np
 
+from mnms.congestion_model import CongestionModel
 from mnms.demand import User
 from mnms.graph.dynamic_space_sharing import DynamicSpaceSharing
 from mnms.graph.layers import MultiLayerGraph
@@ -330,7 +331,7 @@ class Supervisor(object):
         principal_dt = flow_dt * affectation_factor
         self.tcurrent = tstart
         progress = ProgressBar(ceil((tend-tstart).to_seconds()/(flow_dt.to_seconds()*affectation_factor)))
-
+        cm = CongestionModel.get_instance()
         f = open(f'OUTPUTS{os.sep}congestion_file.csv', 'w')
         f.write('TIMESTAMP,VEHICLE ID,PASSENGERS,CAPACITY,CONGESTION INDEX,NODE\n')
 
@@ -400,10 +401,20 @@ class Supervisor(object):
                 for vehicle_id in VehicleManager._vehicles:
                     passengers = len(VehicleManager._vehicles[vehicle_id].passengers)
                     capacity = VehicleManager._vehicles[vehicle_id].capacity
-                    CI =  passengers/capacity
+                    CI = passengers/capacity
                     node = VehicleManager._vehicles[vehicle_id].current_node
                     if (VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.REPOSITIONING and
                             VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.STOP):
+                        cm.update_congestion_model({
+                                                'TIMESTAMP': [str(self.tcurrent)],
+                                                'VEHICLE ID': [vehicle_id],
+                                                'PASSENGERS': [passengers],
+                                                'CAPACITY': [capacity],
+                                                'CONGESTION INDEX': [CI],
+                                                'NODE': [node]
+                                                })
+                        #cm.write_congestion('OUTPUTS')
+                        # ##Write here only because simulation crashes##
                         f.write(f'{str(self.tcurrent)},{vehicle_id},{passengers},{capacity},{CI},{node}\n')
 
             ## Call the update graph
@@ -425,6 +436,7 @@ class Supervisor(object):
 
         ### Finalize simulation
         f.close()
+        cm.write_congestion('OUTPUTS')
         if self._user_flow._write:
             self._user_flow.write_result()
         self.finalize()
