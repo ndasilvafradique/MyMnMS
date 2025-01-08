@@ -127,9 +127,8 @@ if __name__ == '__main__':
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
-    # 74-01 sto rilanciando il test su baseline behavior_1641
-    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=1, beta=1, gamma=1, #congestion_file_path='SIMULATION_BASELINE_BEHAVIOR_noPathMod/congestion_file.csv')
-    congestion_file_path='SIMULATION_BASELINE_BEHAVIOR_1641/congestion_file.csv')
+    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=1, beta=1, gamma=1,
+                                                     baseline=True, top_k=3, n_shortest_path=10)
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,
