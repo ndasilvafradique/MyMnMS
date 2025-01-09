@@ -111,7 +111,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                 #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
                                 #print(str(tcurrent), sum(path_tt[:i]), t)
                                 line = next_line
-                                CI_score[p] += self.get_CI(x, t)
+                                CI_score[p] += self.get_CI(x)
                                 BI_score[p] += self.get_BI(uid, x, t)
                                 if i != 0:
                                     line_changes = line_changes + 1
@@ -143,15 +143,10 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             for c in criteria]
         ranked_paths = pd.DataFrame({'ID': list(range(P)), 'SCORE': [0.0] * P})
 
-        # for r in rankings:
-        #     print(r)
-        #
-        # print(ranked_paths)
-
         for p in ranked_paths.index:
             for rank in rankings:
                 path = rank[rank['ID'] == p]
-                ranked_paths.iloc[p, 1] += path.iloc[0, 1] * (path.index[0] + 1)  # VALUE * POSITION
+                ranked_paths.iloc[p, 1] += (path.index[0] + 1)  # POSITION
         return ranked_paths
 
     def get_CI(self, node):
