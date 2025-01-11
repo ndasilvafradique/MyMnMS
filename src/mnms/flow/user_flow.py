@@ -182,6 +182,7 @@ class UserFlow(object):
         """
         if user.path is not None:
             upath = user.path.nodes
+            print('User path:', user.id, user.path.nodes)
 
             start_node = self._gnodes[user.current_node]
             start_node_pos = start_node.position
@@ -194,6 +195,7 @@ class UserFlow(object):
                     mservice_id = user.path.mobility_services[ilayer]
                     mservice = self._graph.layers[layer].mobility_services[mservice_id]
                     log.info(f"User {user.id} requests mobility service {mservice._id}")
+                    print(f'{user.id} Mservice.add_request({upath[slice_nodes][-1]}, ...) ', upath, slice_nodes)
                     mservice.add_request(user, upath[slice_nodes][-1], request_time)
                     user.requested_service = mservice
                     return mservice
@@ -240,7 +242,7 @@ class UserFlow(object):
                 cnode = u.current_node
                 cnode_ind = u.get_current_node_index()
                 print('upath', upath, 'cnode', cnode, 'c node ind', cnode_ind)
-                print('nodo', upath[cnode_ind + 1])
+                #print('nodo', upath[cnode_ind + 1])
                 next_link = self._gnodes[cnode].adj[upath[cnode_ind + 1]]
                 u.position = self._gnodes[cnode].position
                 if cnode == upath[-1]:

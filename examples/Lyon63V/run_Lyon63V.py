@@ -10,7 +10,7 @@ from mnms.mobility_service.personal_vehicle import PersonalMobilityService
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
 
 indir = "INPUTS"
-outdir = "OUTPUTS"
+outdir = "BASELINE"
 
 set_all_mnms_logger_level(LOGLEVEL.INFO)
 #set_mnms_logger_level(LOGLEVEL.INFO, ["mnms.simulation","mnms.mobility_service.public_transport"])

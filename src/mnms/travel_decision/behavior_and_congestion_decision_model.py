@@ -49,7 +49,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               n_shortest_path=n_shortest_path
                                                               )
         # Connect to Redis (adjust host and port)
-        self.redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
+        # self.redis_client = redis.StrictRedis(host='http://137.121.170.69',
+        #                                      port=6379, decode_responses=True)
 
         self._seed = None
         self._rng = None
@@ -112,12 +113,12 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                 #print(str(tcurrent), sum(path_tt[:i]), t)
                                 line = next_line
                                 CI_score[p] += self.get_CI(x)
-                                BI_score[p] += self.get_BI(uid, x, t)
+                                #BI_score[p] += self.get_BI(uid, x, t)
                                 if i != 0:
                                     line_changes = line_changes + 1
                         i += 1
                     CI_score[p] = self.alpha * CI_score[p] / line_changes
-                    BI_score[p] = self.beta * BI_score[p] / line_changes
+                    #BI_score[p] = self.beta * BI_score[p] / line_changes
 
             if self.baseline:
                 criteria = {'BI': (BI_score, True), 'C': (cost_score, False)}

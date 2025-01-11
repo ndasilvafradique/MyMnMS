@@ -413,7 +413,7 @@ class Supervisor(object):
                                                 'CONGESTION INDEX': [CI],
                                                 'NODE': [node]
                                                 })
-                        #cm.write_congestion('OUTPUTS')
+                        #cm.write_congestion('BASELINE')
                         # ##Write here only because simulation crashes##
                         f.write(f'{str(self.tcurrent)},{vehicle_id},{passengers},{capacity},{CI},{node}\n')
 

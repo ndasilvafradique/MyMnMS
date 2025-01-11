@@ -39,7 +39,7 @@ network_file_with_roadstypo = input_params['network_file'][:-5]+'_roadstypo.json
 demand_file = input_params['demand_file'] # path to csv demand file
 mfd_file = input_params['mfd_file'] # path to csv MFD file
 # outputs
-outdir = output_params['output_dir'] # name of output folder, ex: "OUTPUTS"
+outdir = output_params['output_dir'] # name of output folder, ex: "BASELINE"
 log_file = output_params['log_file'] # path to log file, ex: "/simulation.log"
 path_file = output_params['path_file'] # path to csv path file
 user_file = output_params['user_file'] # path to csv user file

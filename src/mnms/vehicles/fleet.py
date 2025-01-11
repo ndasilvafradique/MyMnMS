@@ -8,7 +8,8 @@ class FleetManager(object):
     def __init__(self,
                  veh_type: Type[Vehicle],
                  mobility_service: str,
-                 is_personal: bool):
+                 is_personal: bool,
+                 ):
         """
         Manage a fleet of Vehicles
 
@@ -23,19 +24,25 @@ class FleetManager(object):
         self._mobility_service = mobility_service
         self._is_personal = is_personal
 
-    def create_vehicle(self, node: str, capacity: int, activities: Optional[List[VehicleActivity]]):
-        new_veh = self._constructor(node, capacity, self._mobility_service, self._is_personal, activities=activities)
+    def create_vehicle(self, node: str, capacity: int, activities: Optional[List[VehicleActivity]], vehicle_path_link,
+                       vehicle_path_nodes):
+        new_veh = self._constructor(node, capacity, self._mobility_service, self._is_personal, activities=activities,
+                                    vehicle_path_link=vehicle_path_link,
+                                    vehicle_path_nodes=vehicle_path_nodes
+                                    )
         self.vehicles[new_veh.id] = new_veh
         self.__veh_manager.add_vehicle(new_veh)
         return new_veh
 
-    def create_waiting_vehicle(self, node: str, capacity: int):
-        return self.create_vehicle(node, capacity, [VehicleActivityStop(node, is_done=False)])
+    def create_waiting_vehicle(self, node: str, capacity: int, vehicle_path_link, vehicle_path_nodes):
+        return self.create_vehicle(node, capacity, [VehicleActivityStop(node, is_done=False)],
+                                   vehicle_path_link=vehicle_path_link,
+                                   vehicle_path_nodes=vehicle_path_nodes
+                                   )
 
-    def delete_vehicle(self, vehid:str):
+    def delete_vehicle(self, vehid: str):
         self.__veh_manager.remove_vehicle(self.vehicles[vehid])
         del self.vehicles[vehid]
 
     def vehicle_type(self):
         return self._constructor.__name__ if self._constructor is not None else None
-

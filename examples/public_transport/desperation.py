@@ -21,7 +21,7 @@ import json
 import pandas as pd
 
 indir = "INPUTS"
-outdir = "OUTPUTS"
+outdir = "BASELINE"
 
 # set_all_mnms_logger_level(LOGLEVEL.WARNING)
 set_mnms_logger_level(LOGLEVEL.INFO, ["mnms.simulation"])

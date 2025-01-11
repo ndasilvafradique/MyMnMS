@@ -76,7 +76,10 @@ class PersonalMobilityService(AbstractMobilityService):
                                             capacity=self._veh_capacity,
                                             activities=[VehicleActivityServing(node=upath[-1],
                                                                                path=veh_path,
-                                                                               user=user)])
+                                                                               user=user)],
+                                            vehicle_path_link=veh_path,
+                                            vehicle_path_nodes=upath
+                                                )
             user.add_personal_vehicle(self.id, new_veh)
             if self._observer is not None:
                 new_veh.attach(self._observer)

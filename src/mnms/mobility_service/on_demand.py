@@ -534,9 +534,11 @@ class OnDemandMobilityService(AbstractOnDemandMobilityService):
         veh, veh_path = self._cache_request_vehicles[user.id]
         log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self._id}')
         upath = list(user.path.nodes)
+        print(f'In matching {user.id} drops at {drop_node}, {upath}, cutted from {user.get_current_node_index()} to {user.get_node_index_in_path(drop_node) + 1}')
         upath = upath[user.get_current_node_index():user.get_node_index_in_path(drop_node) + 1]
         user_path = self.construct_veh_path(upath)
         veh_path = self.construct_veh_path(veh_path)
+        print(f'Creates the pickup activity with the veh_path {veh_path} and the Serving with {upath}')
         activities = [
             VehicleActivityPickup(node=user.current_node,
                                   path=veh_path,

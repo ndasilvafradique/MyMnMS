@@ -67,7 +67,7 @@ def _insert_in_activity(pu_node, ind_pu, do_node, ind_do, user, veh):
         print("PU PATH", pu_path)
         
         if pu_ind_inpath == do_ind_inpath:
-            print('PROBLEMAAAAAAAAAAAAAAAAAAAA')
+            print('PROBLEMA')
             #do_ind_inpath = do_ind_inpath + 1
         
         do_path = activity_to_modify.path[pu_ind_inpath:do_ind_inpath]
@@ -372,13 +372,19 @@ class PublicTransportMobilityService(AbstractMobilityService):
             veh_path = self.construct_public_transport_path(lid)
             end_node = self.lines[lid]['nodes'][-1]
             start_node = self.lines[lid]['nodes'][0]
+            print(f'New vehicle {veh_path} {end_node} {start_node}')
+            veh_path_link = self.construct_public_transport_path(lid)
+            veh_path_nodes = self.lines[lid]['nodes']
 
             capacity = self.capacity_info[lid]
             new_veh = self.fleet.create_vehicle(start_node,
                                                 capacity=capacity,
                                                 # capacity=self._veh_capacity,
                                                 activities=[VehicleActivityStop(node=end_node,
-                                                                                path=veh_path)])
+                                                                                path=veh_path)],
+                                                vehicle_path_link=veh_path_link,
+                                                vehicle_path_nodes=veh_path_nodes
+                                                )
             new_veh._current_link = veh_path[0][0]
             new_veh._remaining_link_length = veh_path[0][1]
             self._next_veh_departure[lid] = (self._current_time_table[lid], new_veh)
@@ -402,6 +408,8 @@ class PublicTransportMobilityService(AbstractMobilityService):
             self.vehicles[lid].appendleft(start_veh)
 
             capacity = self.capacity_info[lid]
+            veh_path_link = self.construct_public_transport_path(lid)
+            veh_path_nodes = self.lines[lid]['nodes']
 
             # Manage next departure
             self._current_time_table[lid] = self._next_time_table[lid]
@@ -416,7 +424,10 @@ class PublicTransportMobilityService(AbstractMobilityService):
                                                     capacity=capacity,
                                                     # capacity=self._veh_capacity,
                                                     activities=[VehicleActivityStop(node=end_node,
-                                                                                    path=veh_path)])
+                                                                                    path=veh_path)],
+                                                    vehicle_path_link=veh_path_link,
+                                                    vehicle_path_nodes=veh_path_nodes
+                                                    )
                 new_veh._current_link = veh_path[0][0]
                 new_veh._remaining_link_length = veh_path[0][1]
                 self._next_veh_departure[lid] = (self._current_time_table[lid], new_veh)
@@ -444,9 +455,11 @@ class PublicTransportMobilityService(AbstractMobilityService):
         Returns:
             -all_departures: lists of vehicles that are about to start service on the line
         """
-        veh_path = self.construct_public_transport_path(lid)
+        veh_path_link = self.construct_public_transport_path(lid)
+        veh_path_nodes = self.lines[lid]['nodes']
         end_node = self.lines[lid]['nodes'][-1]
         start_node = self.lines[lid]['nodes'][0]
+        print(f'New vehicle [recursive] {veh_path} {end_node} {start_node}')
 
         capacity = self.capacity_info[lid]
 
@@ -457,7 +470,11 @@ class PublicTransportMobilityService(AbstractMobilityService):
                                                     capacity=capacity,
                                                     # capacity=self._veh_capacity,
                                                     activities=[VehicleActivityStop(node=end_node,
-                                                                                    path=veh_path)])
+                                                                                    path=veh_path)],
+                                                    vehicle_path_link=veh_path_link,
+                                                    vehicle_path_nodes=veh_path_nodes
+                                                    )
+
                 new_veh._current_link = veh_path[0][0]
                 new_veh._remaining_link_length = veh_path[0][1]
                 self._next_veh_departure[lid] = (self._current_time_table[lid], new_veh)
@@ -498,7 +515,10 @@ class PublicTransportMobilityService(AbstractMobilityService):
                                                     capacity=capacity,
                                                     # capacity=self._veh_capacity,
                                                     activities=[VehicleActivityStop(node=end_node,
-                                                                                    path=veh_path)])
+                                                                                    path=veh_path)],
+                                                    vehicle_path_link=veh_path_link,
+                                                    vehicle_path_nodes=veh_path_nodes
+                                                    )
                 new_veh._current_link = veh_path[0][0]
                 new_veh._remaining_link_length = veh_path[0][1]
                 self._next_veh_departure[lid] = (self._next_time_table[lid], new_veh)
@@ -648,7 +668,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         user = request.user
         drop_node = request.drop_node
-        print('MATCHING - request DROP NODE', drop_node)
+        print('MATCHING - request DROP NODE', request, drop_node)
         veh, line = self._cache_request_vehicles[user.id]
         log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self.id}')
 

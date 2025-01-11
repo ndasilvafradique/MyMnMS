@@ -200,6 +200,7 @@ class AbstractMobilityService(ABC):
         -------
 
         """
+        print(f'Adding request for {user.id} with drop node {drop_node}')
         self._user_buffer[user.id] = Request(user, drop_node, request_time)
         #NB: works only for at most one simulatneous request per user...
 
@@ -276,6 +277,7 @@ class AbstractMobilityService(ABC):
                 user = req.user
                 uid = user.id
                 drop_node = req.drop_node
+                print('Launch matching', user, uid, drop_node)
                 if uid not in users_canceling:
                     # User makes service request
                     service_dt = self.request(user, drop_node)
@@ -698,7 +700,10 @@ class AbstractOnDemandMobilityService(AbstractMobilityService, metaclass=ABCMeta
         assert node in self.graph.nodes
         new_veh = self.fleet.create_vehicle(node,
                                             capacity=self.veh_capacity,
-                                            activities=[VehicleActivityStop(node=node)])
+                                            activities=[VehicleActivityStop(node=node)],
+                                            vehicle_path_link = veh_path_link,
+                                            vehicle_path_nodes = veh_path_nodes
+                                            )
         new_veh.set_position(self.graph.nodes[node].position)
 
         if self.observer is not None:
