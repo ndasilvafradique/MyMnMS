@@ -505,18 +505,21 @@ class Vehicle(TimeDependentSubject):
             print('End of line', self.is_moving, self.current_node, self.vehicle_path_link)
 
     def remove_activities_of(self, users_to_replan):
+        users = [x.id for x in users_to_replan]
+        print('Remove activities of', users_to_replan)
         start_node_idx = self.vehicle_path_nodes.index(self.current_node) + 1
         nodes = self.vehicle_path_nodes[start_node_idx:]
         to_remove = {}
         for node in nodes:
             to_remove[node] = []
             for activity in self._activities[node]:
-                if activity.user is not None and activity.user.id in users_to_replan:
+                if activity.user is not None and activity.user.id in users:
+                    print('Removing activity ', activity, 'of', activity.user.id, 'at', node)
                     to_remove[node].append(activity)
 
         for node in to_remove:
-            if len(to_remove[node]):
-                self._activities[node].remove(to_remove[node])
+            for a in to_remove[node]:
+                self._activities[node].remove(a)
 
     def execute_activity(self, activity, tcurrent):
         if not activity.is_done:
