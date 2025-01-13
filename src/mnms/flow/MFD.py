@@ -175,45 +175,30 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
 
         dist_travelled = dt*speed
         users_to_replan = set()
-        if dist_travelled > veh.remaining_link_length:
-            dist_travelled = veh.remaining_link_length
-            elapsed_time = dist_travelled / speed
+        if dist_travelled > veh._remaining_link_length:
+            dist_travelled = veh._remaining_link_length
+            if not veh.has_reached_terminus():
+                elapsed_time = dist_travelled / speed
+            else:
+                elapsed_time = dt
             veh.update_distance(dist_travelled)
             veh._remaining_link_length = 0
             veh.update_achieved_path()
             self.set_vehicle_position(veh)
             # Se la distanza percorsa è maggiore del link, allora deve spostarsi
             # al nodo successivo e può eseguire le attività di quel nodo
-
             veh.move()
-
-            #try:
-                # current_link, remaining_link_length =  next(veh.activity.iter_path)
-                # veh._current_link = current_link
-                # veh._current_node = current_link[0]
-                # veh._remaining_link_length = remaining_link_length
-            #except StopIteration:
-                #veh._current_node = veh.current_link[1]
-
             activities = veh._activities[veh._current_node]
             for activity in activities:
                 if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
-                    veh.execute_activity(activity, tcurrent)
+                     veh.execute_activity(activity, tcurrent)
                 else:
-                    users_to_replan.add(veh.activity.user)
-                    if len(activities) > 0:
-                        to_remove = []
-                        for a in activities:
-                            if a.user is not None and a.user.id == veh.activity.user.id:
-                                to_remove.append(a)
-                        for a in to_remove:
-                            activities.remove(a)
-                            # print(veh.type, veh.id, veh.activity_type,
-                            #       [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
-                            #        x in veh.activities])
-                    elapsed_time = dt
-                if not veh.is_moving:
-                    elapsed_time = dt
+                    users_to_replan.add(activity.user)
+            if len(users_to_replan):
+                veh.remove_activities_of(users_to_replan)
+            #if not veh.is_moving:
+                # CONTROLLARE LA GESTIONE DEL TEMPO
+            #elapsed_time = dt
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
             return elapsed_time, users_to_replan
@@ -255,8 +240,6 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         return res_id
 
     def step(self, dt: Dt):
-        ##AGGIUSTARE QUI
-
         log.info(f'MFD step {self._tcurrent}')
 
         for res in self.reservoirs.values():
@@ -274,34 +257,16 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         current_vehicles = dict()
         users_to_replan = set()
         for veh_id, veh in self.veh_manager._vehicles.items():
-            if veh.activity is None:
-                if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
-                    veh.next_activity(self._tcurrent)
-            while veh.activity.is_done:
-                # print(veh.type, veh.id, veh.activity_type, [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for x in veh.activities])
-                if len(veh.passengers) < veh.capacity or veh.activity_type != ActivityType.PICKUP:
-                    veh.next_activity(self._tcurrent)
-                else:
-                    users_to_replan.add(veh.activity.user)
-                    if len(veh.activities) > 0:
-                        to_remove = []
-                        for a in veh.activities:
-                            if a.user is not None and a.user.id == veh.activity.user.id:
-                                to_remove.append(a)
-                        for a in to_remove:
-                            path = a.path
-                            ind_next = veh.activities.index(a) + 1
-                            # ind_next is the activity to modify adding the path. The next activity always exist since there are stop or serving final activities
-                            veh.activities[ind_next].modify_path(path + veh.activities[ind_next].path)
-                            veh.activities.remove(a)
-
-                            print('veh id', veh.id, 'activities', veh.activities)
-                        if len(veh.activities) > 0:
-                            veh.activity = veh.activities.popleft()
-                            # print(veh.type, veh.id, veh.activity_type,
-                            #       [f'{x.activity_type} {x.user.id}' if x.user is not None else f'{x.activity_type}' for
-                            #        x in veh.activities])
-
+            # activities = veh._activities[veh._current_node]
+            # for activity in activities:
+            #     if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
+            #         veh.execute_activity(activity, self._tcurrent)
+            #     else:
+            #         users_to_replan.add(veh.activity.user)
+            #
+            #     if len(users_to_replan):
+            #         veh.remove_activities_of(users_to_replan)
+            ### PERCHE CONTA LE ACCUMULAZIONI PRIMA ??
             if veh.is_moving:
                 self.count_moving_vehicle(veh, current_vehicles)
 

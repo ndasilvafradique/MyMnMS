@@ -143,7 +143,7 @@ class CSVVehicleObserver(TimeDependentObserver):
                f"{subject.current_link[0]} {subject.current_link[1]}" if subject.current_link is not None else None,
                f"{subject.position[0]:.{self._prec}f} {subject.position[1]:.{self._prec}f}" if subject.position is not None else None,
                f"{subject.speed:.{self._prec}f}" if subject.speed is not None else None,
-               subject.activity_type.name if subject.activity_type is not None else None,
+               subject.activity_type.name if subject.current_activity_type is not None else None,
                f"{subject.distance:.{self._prec}f}",
                ' '.join(p for p in subject.passengers),
                ' '.join(subject._achieved_path_since_last_notify)]

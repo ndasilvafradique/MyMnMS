@@ -530,6 +530,7 @@ class AbstractMobilityService(ABC):
             pass
 
     def modify_passenger_drop_node(self, passenger, new_drop_node, former_drop_node, gnodes, mlgraph, cost):
+        print('Executing modify_passenger_drop_node', passenger)
         """Method that modifies the drop node of a user which is currently inside a
         vehicle of this mobility service.
 
