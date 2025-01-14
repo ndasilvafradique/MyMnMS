@@ -530,9 +530,8 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         user = request.user
         drop_node = request.drop_node
-        print('MATCHING - request DROP NODE', request, drop_node)
         veh, line = self._cache_request_vehicles[user.id]
-        log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self.id}')
+        log.info(f'User {user.id} matched with vehicle {veh.id} of mobility service {self.id} to drop at {drop_node}')
 
         added = False
         passengers_len = len(veh.passengers)

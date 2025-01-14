@@ -103,7 +103,7 @@ class VehicleActivity(ABC):
         veh.current_activity_type = self.activity_type
         veh._is_moving = self.is_moving
         self.is_done=True
-        return
+        return True
 
     def copy(self):
         return self.__class__(deepcopy(self.node),
@@ -125,6 +125,7 @@ class VehicleActivityStop(VehicleActivity):
         if self.user is not None:
             self.user.vehicle = veh
         self.is_done=True
+        return True
 
 
     def start(self, veh: "Vehicle", tcurrent: Time):
@@ -158,7 +159,7 @@ class VehicleActivityRepositioning(VehicleActivity):
         veh.current_activity_type = self.activity_type
         veh._is_moving = self.is_moving
         self.is_done=True
-        return
+        return True
 
     def start(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is started
@@ -186,6 +187,7 @@ class VehicleActivityPickup(VehicleActivity):
     is_moving: bool = field(default=True, init=False)
 
     def execute(self, veh: "Vehicle", tcurrent: Time):
+        #if len(veh.passengers) < veh.capacity:
         veh.current_activity_type = self.activity_type
         veh._is_moving = self.is_moving
         self.user.vehicle = veh
@@ -193,6 +195,8 @@ class VehicleActivityPickup(VehicleActivity):
         self.user.set_state_inside_vehicle()
         print('Pick up', veh.id, f'{len(veh.passengers)}/{veh.capacity}', veh.passengers)
         self.is_done = True
+        return True
+        #return False
 
 
     def start(self, veh: "Vehicle", tcurrent: Time):
@@ -253,6 +257,7 @@ class VehicleActivityServing(VehicleActivity):
         # before user's arrival at destination
         self.user.notify(tcurrent)
         self.is_done = True
+        return True
 
     def start(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is started
@@ -340,6 +345,7 @@ class Vehicle(TimeDependentSubject):
 
         self.vehicle_path_link = vehicle_path_link
         self.vehicle_path_nodes = vehicle_path_nodes
+        self._starting_node = True
         self.current_activity_type = None
         self._is_moving = False
         self._has_reached_terminus = False
@@ -362,9 +368,8 @@ class Vehicle(TimeDependentSubject):
 
         if starting_activities is not None:
             self.add_activities(starting_activities)
-            for activity in self._activities[self._current_node]:
-                self.execute_activity(activity, None)
-            #self.next_activity(None) FARGLI FARE TUTTE LE ACTIVITY INIZIALIII
+            # for activity in self._activities[self._current_node]:
+            #     self.execute_activity(activity, None)
         else:
             self._activities[self._current_node] = self.default_activity()
             #self.activity: VehicleActivity = self.default_activity()
@@ -372,10 +377,11 @@ class Vehicle(TimeDependentSubject):
         #self.activities: Deque[VehicleActivity] = deque([])
         #self.activity = None  # current activity
 
-        for activity in self._activities[self._current_node]:
-            print('Execute', self.type, self.id, activity.activity_type)
+        print(f'Init {self.type} {self.id} at {self._current_node}')
 
-            self.execute_activity(activity, None)
+        # for activity in self._activities[self._current_node]:
+        #     print('Starting node', self.type, self.id, activity.activity_type)
+        #     self.execute_activity(activity, None)
 
     def __repr__(self):
         return f"{self.__class__.__name__}('{self._global_id}', '{self.activity_type.name if self.activity_type is not None else None}')"
@@ -487,22 +493,28 @@ class Vehicle(TimeDependentSubject):
     def has_reached_terminus(self):
         return self._has_reached_terminus
 
-
     def move(self):
         if len(self.vehicle_path_link) > 1:
-            self.vehicle_path_nodes = self.vehicle_path_nodes[1:]
-            self._current_node = self.vehicle_path_nodes[0]
-            self.vehicle_path_link = self.vehicle_path_link[1:]
-            self._current_link = self.vehicle_path_link[0][0]
-            self._remaining_link_length = self.vehicle_path_link[0][1]
-            self._has_reached_terminus = False
-            #print(f'Moving {self.type} {self.id} {self.vehicle_path_link}')
+            if not self._starting_node:
+                self.vehicle_path_nodes = self.vehicle_path_nodes[1:]
+                self._current_node = self.vehicle_path_nodes[0]
+                self.vehicle_path_link = self.vehicle_path_link[1:]
+                self._current_link = self.vehicle_path_link[0][0]
+                self._remaining_link_length = self.vehicle_path_link[0][1]
+                print(f'Moving {self.type} {self.id} {self._current_node} LINK: {self._current_link}')
+                return False
+            else:
+                print(f'Start of line {self.type} {self.id} {self._current_node} LINK: {self._current_link} ')
+                self._has_reached_terminus = False
+                self._starting_node = False
+                return True
         else:
             self._current_node = self.vehicle_path_nodes[-1]
             self._current_link = self.vehicle_path_link[0][0]
             self._remaining_link_length = 0.0
             self._has_reached_terminus = True
             print('End of line', self.is_moving, self.current_node, self.vehicle_path_link)
+            return True
 
     def remove_activities_of(self, users_to_replan):
         users = [x.id for x in users_to_replan]
@@ -523,10 +535,12 @@ class Vehicle(TimeDependentSubject):
 
     def execute_activity(self, activity, tcurrent):
         if not activity.is_done:
-            activity.execute(self, tcurrent)
-            print('Executed', activity.activity_type, activity.is_done)
+            completed = activity.execute(self, tcurrent)
+            print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
+            return completed
         else:
-            print(f'Activity {activity.activity_type} already executed for {self.id}')
+            print(f'Activity {activity.activity_type} already executed for {self.type} {self.id} at {activity.node}')
+            return True
 
     def next_activity(self, tcurrent: Time):
         if self.activity is not None:
@@ -550,23 +564,23 @@ class Vehicle(TimeDependentSubject):
             else:
                 activity.is_done = True
 
-    def override_current_activity(self, tcurrent):
-        next_activity = self.activities.popleft()
-        last_activity = self.activity
-        self.activity = next_activity
-        self.activity.start(self, tcurrent)
+    # def override_current_activity(self, tcurrent):
+    #     next_activity = self.activities.popleft()
+    #     last_activity = self.activity
+    #     self.activity = next_activity
+    #     self.activity.start(self, tcurrent)
+    #
+    #     if last_activity.activity_type is ActivityType.STOP:
+    #         if next_activity.path:
+    #             self._current_link, self._remaining_link_length = next(next_activity.iter_path)
+    #             assert self._current_node == self._current_link[0]
+    #         else:
+    #             next_activity.is_done = True
 
-        if last_activity.activity_type is ActivityType.STOP:
-            if next_activity.path:
-                self._current_link, self._remaining_link_length = next(next_activity.iter_path)
-                assert self._current_node == self._current_link[0]
-            else:
-                next_activity.is_done = True
-
-    def iter_activities(self):
-        yield self.activity
-        for act in self.activities:
-            yield act
+    # def iter_activities(self):
+    #     yield self.activity
+    #     for act in self.activities:
+    #         yield act
 
     def set_path(self, path: List[Tuple[Tuple[str, str], float]]):
         self._iter_path = iter(path)
@@ -580,35 +594,35 @@ class Vehicle(TimeDependentSubject):
     def set_position(self, position: np.ndarray):
         self._position = position
 
-    def drop_user(self, tcurrent: Time, user: 'User', drop_pos: np.ndarray):
-        log.info(f"{user} is dropped at {self._current_link[0]}")
-        user.remaining_link_length = 0
-        upath = user.path.nodes
-        unode = self._current_link[0]
-        next_node_ind = user.get_node_index_in_path(unode) + 1
-        user.set_position((unode, upath[next_node_ind]), unode, 0, drop_pos, tcurrent)
-        user.vehicle = None
-        user.notify(tcurrent)
+    # def drop_user(self, tcurrent: Time, user: 'User', drop_pos: np.ndarray):
+    #     log.info(f"{user} is dropped at {self._current_link[0]}")
+    #     user.remaining_link_length = 0
+    #     upath = user.path.nodes
+    #     unode = self._current_link[0]
+    #     next_node_ind = user.get_node_index_in_path(unode) + 1
+    #     user.set_position((unode, upath[next_node_ind]), unode, 0, drop_pos, tcurrent)
+    #     user.vehicle = None
+    #     user.notify(tcurrent)
+    #
+    #     del self.passengers[user.id]
 
-        del self.passengers[user.id]
+    # def drop_all_passengers(self, tcurrent: Time):
+    #     for _, user in self.passengers.values():
+    #         log.info(f"{user} is dropped at {self._current_link[1]}")
+    #         unode = self._current_link[1]
+    #         user.current_node = unode
+    #         user.remaining_link_length = 0
+    #         user.position = self._position
+    #         user.notify(tcurrent)
+    #         user.vehicle = None
+    #
+    #     self.passengers = dict()
 
-    def drop_all_passengers(self, tcurrent: Time):
-        for _, user in self.passengers.values():
-            log.info(f"{user} is dropped at {self._current_link[1]}")
-            unode = self._current_link[1]
-            user.current_node = unode
-            user.remaining_link_length = 0
-            user.position = self._position
-            user.notify(tcurrent)
-            user.vehicle = None
-
-        self.passengers = dict()
-
-    def start_user_trip(self, userid, take_node):
-        log.info(f'Passenger {userid} has been taken by {self} at {take_node}')
-        take_time, user = self._next_passenger.pop(userid)
-        user.vehicle = self.id
-        self.passengers[userid] = (take_time, user)
+    # def start_user_trip(self, userid, take_node):
+    #     log.info(f'Passenger {userid} has been taken by {self} at {take_node}')
+    #     take_time, user = self._next_passenger.pop(userid)
+    #     user.vehicle = self.id
+    #     self.passengers[userid] = (take_time, user)
 
     def default_activity(self):
         return VehicleActivityStop(node=self._current_node,

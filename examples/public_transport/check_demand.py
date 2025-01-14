@@ -137,10 +137,10 @@ if __name__ == '__main__':
                                           '45.75791079314419 4.832043966457701',
                                           '45.73362213384172 4.818299543365892']})
 
-    demandes = pd.DataFrame({'ID': ['U0', 'U1'],
-                             'DEPARTURE': ['08:20:00', '08:20:00'],
-                             'ORIGIN': ['ParcduChene', 'ParcduChene'],
-                             'DESTINATION': ['GrangeBlanche', 'GrangeBlanche']})
+    demandes = pd.DataFrame({'ID': ['U0', 'U1', 'U3'],
+                             'DEPARTURE': ['08:20:00', '08:20:00', '08:20:00'],
+                             'ORIGIN': ['GrangeBlanche', 'GrangeBlanche', 'GrangeBlanche'],
+                             'DESTINATION': ['ParcduChene', 'ParcduChene', 'ParcduChene']})
 
     demandes = demandes.merge(coordinates, left_on=['ORIGIN'], right_on=['NAME'], how='left')
     demandes.drop(columns=['ORIGIN'], inplace=True)

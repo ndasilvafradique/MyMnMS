@@ -64,7 +64,9 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
     def __init__(self, outfile: str = None, writeheader: bool = True):
         super(MFDFlowMotor, self).__init__(outfile=outfile)
         if outfile is not None and writeheader:
-            self._csvhandler.writerow(['AFFECTATION_STEP', 'FLOW_STEP', 'TIME', 'RESERVOIR', 'VEHICLE_TYPE', 'SPEED', 'ACCUMULATION', 'TRIP_LENGTHS'])
+            self._csvhandler.writerow(
+                ['AFFECTATION_STEP', 'FLOW_STEP', 'TIME', 'RESERVOIR', 'VEHICLE_TYPE', 'SPEED', 'ACCUMULATION',
+                 'TRIP_LENGTHS'])
 
         self.reservoirs: Dict[str, Reservoir] = dict()
 
@@ -94,7 +96,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                             if i == 0:
                                 l_dnode_pos = rnodes[roads.sections[section].downstream].position
                                 sections_length.append((section, _dist(unode_pos - l_dnode_pos)))
-                            elif i == len(self._graph.map_reference_links[lid])-1:
+                            elif i == len(self._graph.map_reference_links[lid]) - 1:
                                 l_unode_pos = rnodes[roads.sections[section].upstream].position
                                 sections_length.append((section, _dist(l_unode_pos - dnode_pos)))
                             else:
@@ -163,7 +165,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         else:
             normalized_direction = direction
             travelled = 0
-        veh.set_position(unode_pos+normalized_direction*travelled)
+        veh.set_position(unode_pos + normalized_direction * travelled)
 
     def move_veh(self, veh: Vehicle, tcurrent: Time, dt: float, speed: float):
         """Move a vehicle
@@ -172,8 +174,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
 
             Returns
         """
-
-        dist_travelled = dt*speed
+        dist_travelled = dt * speed
         users_to_replan = set()
         if dist_travelled > veh._remaining_link_length:
             dist_travelled = veh._remaining_link_length
@@ -188,26 +189,32 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             # Se la distanza percorsa è maggiore del link, allora deve spostarsi
             # al nodo successivo e può eseguire le attività di quel nodo
             veh.move()
-            activities = veh._activities[veh._current_node]
-            for activity in activities:
-                if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
-                     veh.execute_activity(activity, tcurrent)
-                else:
-                    users_to_replan.add(activity.user)
-            if len(users_to_replan):
-                veh.remove_activities_of(users_to_replan)
-            #if not veh.is_moving:
-                # CONTROLLARE LA GESTIONE DEL TEMPO
-            #elapsed_time = dt
+            veh._is_moving=False
+            # activities = veh._activities[veh._current_node]
+            # for activity in activities:
+            #     if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
+            #         veh.execute_activity(activity, tcurrent)
+            #     else:
+            #         users_to_replan.add(activity.user)
+            # if len(users_to_replan):
+            #     veh.remove_activities_of(users_to_replan)
+
+            # if not veh.is_moving:
+            #     elapsed_time = dt
             for passenger_id, passenger in veh.passengers.items():
-                passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
+                passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position,
+                                       tcurrent)
+                print(f'Passenger {passenger_id} set position to {passenger.position}')
             return elapsed_time, users_to_replan
         else:
+            print(f'Still travelling {veh.type} {veh.id} on {veh.current_link} {dist_travelled} < {veh.remaining_link_length}')
             veh._remaining_link_length -= dist_travelled
             veh.update_distance(dist_travelled)
             self.set_vehicle_position(veh)
             for passenger_id, passenger in veh.passengers.items():
-                passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position, tcurrent)
+                passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position,
+                                       tcurrent)
+            veh._is_moving=True
             return dt, users_to_replan
 
     def get_vehicle_zone(self, veh):
@@ -221,7 +228,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             else:
                 slengths = [self.roads_sections[sid].length for sid in sids]
                 l = 0
-                for i in range(len(slengths)-1, -1, -1):
+                for i in range(len(slengths) - 1, -1, -1):
                     l += slengths[i]
                     if l >= veh.remaining_link_length:
                         sid = sids[i]
@@ -229,7 +236,8 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             # Get section zone
             res_id = self._graph.roads.sections[sid].zone
         except:
-            log.warning(f'Could not find zone of vehicle {veh.id} (current link = {veh.current_link}) with direct method...')
+            log.warning(
+                f'Could not find zone of vehicle {veh.id} (current link = {veh.current_link}) with direct method...')
             pos = veh.position
             res_id = None
             for res in self.reservoirs.values():
@@ -241,7 +249,6 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
 
     def step(self, dt: Dt):
         log.info(f'MFD step {self._tcurrent}')
-
         for res in self.reservoirs.values():
             ghost_acc = res.ghost_accumulation(self._tcurrent)
             for mode in res.modes:
@@ -256,20 +263,22 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         # Calculate accumulations
         current_vehicles = dict()
         users_to_replan = set()
+
         for veh_id, veh in self.veh_manager._vehicles.items():
-            # activities = veh._activities[veh._current_node]
-            # for activity in activities:
-            #     if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
-            #         veh.execute_activity(activity, self._tcurrent)
-            #     else:
-            #         users_to_replan.add(veh.activity.user)
-            #
-            #     if len(users_to_replan):
-            #         veh.remove_activities_of(users_to_replan)
-            ### PERCHE CONTA LE ACCUMULAZIONI PRIMA ??
+            print(f'Execute starting activities for {veh.type} {veh.id}')
+            activities = veh._activities[veh._current_node]
+            if not veh.is_moving:
+                for activity in activities:
+                    if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
+                        veh.execute_activity(activity, self._tcurrent)
+                    else:
+                        print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
+                        users_to_replan.add(activity.user)
+                        veh.remove_activities_of([activity.user])
             if veh.is_moving:
                 self.count_moving_vehicle(veh, current_vehicles)
 
+        print('Users to replan:', users_to_replan)
         log.info(f"Moving {len(current_vehicles)} vehicles")
 
         # Update the traffic conditions
@@ -368,7 +377,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                     costs[mservice].pop(banned_cost, None)
                     if banned_cost != 'travel_time':
                         costs[mservice].pop('travel_time', None)
-                linkcosts[lid]=costs
+                linkcosts[lid] = costs
 
                 # Update of the cost in the corresponding graph layer
                 for links in link_layers:
@@ -378,19 +387,19 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         if len(linkcosts) > 0:
             graph.update_costs(linkcosts)
 
-    def write_result(self, step_affectation: int, step_flow:int, flow_dt: Dt):
+    def write_result(self, step_affectation: int, step_flow: int, flow_dt: Dt):
         tcurrent = self._tcurrent.copy().remove_time(flow_dt).time
         for resid, res in self.reservoirs.items():
             resid = res.id
             for mode in res.modes:
                 trip_lengths = res.trip_lengths[mode] if mode in res.trip_lengths else None
-                trip_lengths = ' '.join([str(round(l,2)) for l in trip_lengths]) if trip_lengths is not None else None
+                trip_lengths = ' '.join([str(round(l, 2)) for l in trip_lengths]) if trip_lengths is not None else None
                 self._csvhandler.writerow([str(step_affectation),
-                    str(step_flow),
-                    tcurrent,
-                    resid,
-                    mode,
-                    res.dict_speeds[mode],
-                    res.dict_accumulations[mode],
-                    trip_lengths])
+                                           str(step_flow),
+                                           tcurrent,
+                                           resid,
+                                           mode,
+                                           res.dict_speeds[mode],
+                                           res.dict_accumulations[mode],
+                                           trip_lengths])
             res.flush_trip_lengths()

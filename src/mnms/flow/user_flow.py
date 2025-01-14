@@ -241,7 +241,7 @@ class UserFlow(object):
                 upath = u.path.nodes
                 cnode = u.current_node
                 cnode_ind = u.get_current_node_index()
-                print('upath', upath, 'cnode', cnode, 'c node ind', cnode_ind)
+                print('Determine user state', u.id, 'upath', upath, 'cnode', cnode, 'c node ind', cnode_ind)
                 #print('nodo', upath[cnode_ind + 1])
                 next_link = self._gnodes[cnode].adj[upath[cnode_ind + 1]]
                 u.position = self._gnodes[cnode].position
