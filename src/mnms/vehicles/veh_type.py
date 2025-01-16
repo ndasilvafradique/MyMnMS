@@ -101,7 +101,7 @@ class VehicleActivity(ABC):
 
     def execute(self, veh: "Vehicle", tcurrent: Time):
         veh.current_activity_type = self.activity_type
-        veh._is_moving = self.is_moving
+        # Move = self.is_moving
         self.is_done=True
         return True
 
@@ -121,10 +121,11 @@ class VehicleActivityStop(VehicleActivity):
 
     def execute(self, veh: "Vehicle", tcurrent: Time):
         veh.current_activity_type = self.activity_type
-        veh._is_moving = self.is_moving
+        # Move = self.is_moving
         if self.user is not None:
             self.user.vehicle = veh
-        self.is_done=True
+        self.is_done = True
+        veh._is_moving = False
         return True
 
 
@@ -157,8 +158,11 @@ class VehicleActivityRepositioning(VehicleActivity):
 
     def execute(self, veh: "Vehicle", tcurrent: Time):
         veh.current_activity_type = self.activity_type
-        veh._is_moving = self.is_moving
-        self.is_done=True
+        # execute = self.is_moving
+        veh._reached_station = True
+        veh._is_moving = True
+        print(f'Repositioning {veh.id} {veh.type}, reached station {veh._reached_station}, moving {veh._is_moving}')
+        self.is_done = True
         return True
 
     def start(self, veh: "Vehicle", tcurrent: Time):
@@ -189,14 +193,13 @@ class VehicleActivityPickup(VehicleActivity):
     def execute(self, veh: "Vehicle", tcurrent: Time):
         #if len(veh.passengers) < veh.capacity:
         veh.current_activity_type = self.activity_type
-        veh._is_moving = self.is_moving
+        # execute = self.is_moving
         self.user.vehicle = veh
         veh.passengers[self.user.id] = self.user
         self.user.set_state_inside_vehicle()
         print('Pick up', veh.id, f'{len(veh.passengers)}/{veh.capacity}', veh.passengers)
         self.is_done = True
         return True
-        #return False
 
 
     def start(self, veh: "Vehicle", tcurrent: Time):
@@ -228,27 +231,41 @@ class VehicleActivityServing(VehicleActivity):
     is_moving: bool = field(default=True, init=False)
 
     def execute(self, veh: "Vehicle", tcurrent: Time):
+        print('EXECUTING THE SERVING FOR', self.user.id, 'at', veh.current_node)
         veh.current_activity_type = self.activity_type
-        veh._is_moving = self.is_moving
+        # Move = self.is_moving
         self.user.vehicle = None
         veh.passengers.pop(self.user.id)
         if veh.is_public_transport():
             print('Serving', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
         self.user.remaining_link_length = 0
-
         upath = self.user.path.nodes
-        last_achieved = False
-        if veh._current_link is not None:
-            if veh._current_link[1] == veh._current_node and self.user.achieved_path and veh._current_node == \
-                    self.user.achieved_path[-1]:
-                last_achieved = True
-            unode = veh._current_link[1]
-        else:
-            unode = veh._current_node
-        next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=last_achieved) + 1
-
+        unode = veh._current_node
+        next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=True) + 1
+        print(f'In serving {self.user.id}, next_node_ind {next_node_ind}, veh position {veh.position}')
         self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
+
+        # last_achieved = False
+        # if veh._current_link is not None:
+        #     print(f'In serving {self.user.id}, remaining link length {self.user.remaining_link_length},'
+        #           f' last achieved {last_achieved}, achieved path [-1] {self.user.achieved_path[-1]}')
+        #     if self.user.achieved_path and veh._current_node == self.user.achieved_path[-1]:
+        #         last_achieved = True
+        #     # if veh._current_link[1] == veh._current_node and self.user.achieved_path and veh._current_node == \
+        #     #         self.user.achieved_path[-1]:
+        #     #     last_achieved = True
+        #     unode = veh._current_link[1]
+        #     print(f'In serving [in if] {self.user.id}, remaining link length {self.user.remaining_link_length},'
+        #           f' last achieved {last_achieved}, achieved path [-1] {self.user.achieved_path[-1]}, unode {unode}')
+        # else:
+        #     unode = veh._current_node
+        #     print(f'In serving [else] {self.user.id}, remaining link length {self.user.remaining_link_length},'
+        #           f' last achieved {last_achieved}, achieved path [-1] {self.user.achieved_path[-1]}, unode {unode}')
+        #
+        # next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=last_achieved) + 1
+        # print(f'In serving {self.user.id}, next_node_ind {next_node_ind}')
+
         self.user.update_achieved_path_ms(veh.mobility_service)
         self.user.vehicle = None
         self.user.set_state_stop()
@@ -284,20 +301,34 @@ class VehicleActivityServing(VehicleActivity):
         if veh.is_public_transport():
             print('Serving done', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
+
         self.user.remaining_link_length = 0
-
         upath = self.user.path.nodes
-        last_achieved = False
-        if veh._current_link is not None:
-            if veh._current_link[1] == veh._current_node and self.user.achieved_path and veh._current_node == \
-                    self.user.achieved_path[-1]:
-                last_achieved = True
-            unode = veh._current_link[1]
-        else:
-            unode = veh._current_node
-        next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=last_achieved) + 1
-
+        unode = veh._current_node
+        next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=True) + 1
+        print(f'In serving {self.user.id}, next_node_ind {next_node_ind}, veh position {veh.position}')
         self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
+
+        # last_achieved = False
+        # if veh._current_link is not None:
+        #     print(f'In serving {self.user.id}, remaining link length {self.user.remaining_link_length},'
+        #           f' last achieved {last_achieved}, achieved path [-1] {self.user.achieved_path[-1]}')
+        #     if self.user.achieved_path and veh._current_node == self.user.achieved_path[-1]:
+        #         last_achieved = True
+        #     # if veh._current_link[1] == veh._current_node and self.user.achieved_path and veh._current_node == \
+        #     #         self.user.achieved_path[-1]:
+        #     #     last_achieved = True
+        #     unode = veh._current_link[1]
+        #     print(f'In serving [in if] {self.user.id}, remaining link length {self.user.remaining_link_length},'
+        #           f' last achieved {last_achieved}, achieved path [-1] {self.user.achieved_path[-1]}, unode {unode}')
+        # else:
+        #     unode = veh._current_node
+        #     print(f'In serving [else] {self.user.id}, remaining link length {self.user.remaining_link_length},'
+        #           f' last achieved {last_achieved}, achieved path [-1] {self.user.achieved_path[-1]}, unode {unode}')
+        #
+        # next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=last_achieved) + 1
+        # print(f'In serving {self.user.id}, next_node_ind {next_node_ind}')
+
         self.user.update_achieved_path_ms(veh.mobility_service)
         self.user.vehicle = None
         self.user.set_state_stop()
@@ -348,6 +379,7 @@ class Vehicle(TimeDependentSubject):
         self._starting_node = True
         self.current_activity_type = None
         self._is_moving = False
+        self._reached_station = False
         self._has_reached_terminus = False
 
         self._current_link = None
@@ -371,17 +403,20 @@ class Vehicle(TimeDependentSubject):
             # for activity in self._activities[self._current_node]:
             #     self.execute_activity(activity, None)
         else:
-            self._activities[self._current_node] = self.default_activity()
+            self.add_activities([self.default_activity()])
             #self.activity: VehicleActivity = self.default_activity()
+
+        # print(f'Adding starting activities for {self.type} {self.id} {self.current_node}'
+        #       f' {[x.activity_type for x in self._activities[self.current_node]]}')
 
         #self.activities: Deque[VehicleActivity] = deque([])
         #self.activity = None  # current activity
 
-        print(f'Init {self.type} {self.id} at {self._current_node}')
+        #print(f'Init {self.type} {self.id} at {self._current_node}')
 
-        # for activity in self._activities[self._current_node]:
-        #     print('Starting node', self.type, self.id, activity.activity_type)
-        #     self.execute_activity(activity, None)
+        for activity in self._activities[self._current_node]:
+            print('Init executing', activity.activity_type, 'for vehicle',self.type, self.id, activity.activity_type)
+            self.execute_activity(activity, None)
 
     def __repr__(self):
         return f"{self.__class__.__name__}('{self._global_id}', '{self.activity_type.name if self.activity_type is not None else None}')"
@@ -466,10 +501,10 @@ class Vehicle(TimeDependentSubject):
         self._achieved_path_since_last_notify = []
 
     activity_order = {
-        ActivityType.REPOSITIONING.value: 0,  # Use .value here
-        ActivityType.SERVING.value: 1,
-        ActivityType.PICKUP.value: 2,
-        ActivityType.STOP.value: 3,
+        ActivityType.STOP.value: 0,
+        ActivityType.REPOSITIONING.value: 1,  # Use .value here
+        ActivityType.SERVING.value: 2,
+        ActivityType.PICKUP.value: 3,
     }
 
     def sort_activities(self, activities):
@@ -487,33 +522,34 @@ class Vehicle(TimeDependentSubject):
             to_reorder.add(a.node)
 
         for node in to_reorder:
-            self._activities[node] = self.sort_activities(self._activities[node])
-            print('Reorder activities', self.type, self.id, self._activities[node])
+            if len(self._activities[node]) > 1:
+                self._activities[node] = self.sort_activities(self._activities[node])
+                #print('Reorder activities', self.type, self.id, [x.activity_type for x in self._activities[node]])
 
     def has_reached_terminus(self):
         return self._has_reached_terminus
 
     def move(self):
         if len(self.vehicle_path_link) > 1:
-            if not self._starting_node:
-                self.vehicle_path_nodes = self.vehicle_path_nodes[1:]
-                self._current_node = self.vehicle_path_nodes[0]
-                self.vehicle_path_link = self.vehicle_path_link[1:]
-                self._current_link = self.vehicle_path_link[0][0]
-                self._remaining_link_length = self.vehicle_path_link[0][1]
-                print(f'Moving {self.type} {self.id} {self._current_node} LINK: {self._current_link}')
-                return False
-            else:
-                print(f'Start of line {self.type} {self.id} {self._current_node} LINK: {self._current_link} ')
-                self._has_reached_terminus = False
-                self._starting_node = False
-                return True
+            #if not self._starting_node:
+            self.vehicle_path_nodes = self.vehicle_path_nodes[1:]
+            self._current_node = self.vehicle_path_nodes[0]
+            self.vehicle_path_link = self.vehicle_path_link[1:]
+            self._current_link = self.vehicle_path_link[0][0]
+            self._remaining_link_length = self.vehicle_path_link[0][1]
+                #print(f'Moving {self.type} {self.id} {self._current_node} LINK: {self._current_link}')
+                #return False
+            # else:
+            #     #print(f'Start of line {self.type} {self.id} {self._current_node} LINK: {self._current_link} ')
+            self._has_reached_terminus = False
+            self._starting_node = False
+            #     return True
         else:
             self._current_node = self.vehicle_path_nodes[-1]
             self._current_link = self.vehicle_path_link[0][0]
             self._remaining_link_length = 0.0
             self._has_reached_terminus = True
-            print('End of line', self.is_moving, self.current_node, self.vehicle_path_link)
+            #print('End of line', self.is_moving, self.current_node, self.vehicle_path_link)
             return True
 
     def remove_activities_of(self, users_to_replan):
@@ -535,12 +571,11 @@ class Vehicle(TimeDependentSubject):
 
     def execute_activity(self, activity, tcurrent):
         if not activity.is_done:
-            completed = activity.execute(self, tcurrent)
-            print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
-            return completed
+            activity.execute(self, tcurrent)
+            self._activities[self.current_node].remove(activity)
+            #print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
         else:
             print(f'Activity {activity.activity_type} already executed for {self.type} {self.id} at {activity.node}')
-            return True
 
     def next_activity(self, tcurrent: Time):
         if self.activity is not None:

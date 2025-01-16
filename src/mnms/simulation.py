@@ -238,6 +238,7 @@ class Supervisor(object):
             for ms in layer.mobility_services.values():
                 log.info(f' Perform matching for mobility service {ms.id}...')
                 start = time()
+                #print('Launch matching for', [x.id for x in new_users], 'flow_dt', flow_dt)
                 ms.launch_matching(new_users, self._user_flow, self._decision_model, flow_dt)
                 end = time()
                 log.info(f' Matching for mobility service {ms.id} done in [{end - start:.5} s]')

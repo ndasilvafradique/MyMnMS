@@ -200,6 +200,7 @@ class OnDemandMobilityService(AbstractOnDemandMobilityService):
             -decision_model: the AbstractDecisionModel object of the simulation
             -dt: time since last call of this method (flow time step)
         """
+        print('OnDemandMobilityService launch marching')
         if self._counter_matching == self.dt_matching:
             # Trigger a matching phase
             self._counter_matching = 0
@@ -229,8 +230,10 @@ class OnDemandMobilityService(AbstractOnDemandMobilityService):
             user = req.user
             drop_node = req.drop_node
             if self.matching_strategy == 'nearest_idle_vehicle_in_radius_fifo':
+                print('nearest_idle_vehicle_in_radius_fifo')
                 service_dt = self.request_nearest_idle_vehicle_in_radius_fifo(user, drop_node)
             elif self.matching_strategy == 'nearest_vehicle_in_radius_fifo':
+                print('nearest_vehicle_in_radius_fifo')
                 service_dt = self.request_nearest_vehicle_in_radius_fifo(user, drop_node)
             else:
                 log.error(f'Matching strategy {self.matching_strategy} unknown for {self.id} mobility service')

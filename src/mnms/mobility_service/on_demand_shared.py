@@ -470,6 +470,7 @@ class OnDemandSharedMobilityService(AbstractOnDemandMobilityService):
             and self._tcurrent - request.request_time <= dt
         if immediate_match:
             veh.dt_move = self._tcurrent - request.request_time
+            print(f'Immediate match between {user.id} and {veh.id} --> {veh.dt_move}')
 
         ## Update user's and (future) passengers' paths' with regard to this match
         passengers = set([a.user for a in new_plan])

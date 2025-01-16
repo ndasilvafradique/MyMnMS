@@ -87,6 +87,8 @@ class UserFlow(object):
             travelled = norm_direction - remaining_length
             user.position = unode_pos+normalized_direction*travelled
 
+        print(f'User set position {user.id} {user.state} {user.current_node} {user.path}')
+
     def _user_walking(self, dt:Dt):
         """Method to manage users who are currently walking.
 
@@ -99,6 +101,7 @@ class UserFlow(object):
         gnodes = self._graph.graph.nodes
         for uid in self._walking.keys():
             user = self.users[uid]
+            print(f'User walking {user.id} {user.state} {user.current_node} {user.path}')
             if user.state == UserState.WALKING:
                 upath = user.path.nodes
                 dist_travelled = dt.to_seconds() * self._walk_speed
@@ -116,6 +119,7 @@ class UserFlow(object):
                         self.set_user_position(user)
                         user.notify(arrival_time.time)
                         if next_node == upath[-1]:
+                            print(f'User {user.id} arrived.')
                             # User arrived at last node of her planned path
                             user.finish_trip(arrival_time)
                             finish_trip.append(user)
@@ -237,11 +241,12 @@ class UserFlow(object):
         """
         to_del = list()
         for u in self.users.values():
+            print(f'Determine user state {u.state}')
             if u.state is UserState.STOP and u.path is not None:
                 upath = u.path.nodes
                 cnode = u.current_node
                 cnode_ind = u.get_current_node_index()
-                print('Determine user state', u.id, 'upath', upath, 'cnode', cnode, 'c node ind', cnode_ind)
+                print('Determine user state', u.id, u.state, u.current_node, u.path)
                 #print('nodo', upath[cnode_ind + 1])
                 next_link = self._gnodes[cnode].adj[upath[cnode_ind + 1]]
                 u.position = self._gnodes[cnode].position

@@ -277,11 +277,12 @@ class AbstractMobilityService(ABC):
                 user = req.user
                 uid = user.id
                 drop_node = req.drop_node
-                print('Launch matching', user, uid, drop_node)
+                #print('Launch matching', user, uid, drop_node)
                 if uid not in users_canceling:
                     # User makes service request
                     service_dt = self.request(user, drop_node)
                     # Check pick-up time proposition compared with user waiting tolerance
+                    print(f'Try matching {user.id}: service dt {service_dt}')
                     if user.pickup_dt[self.id] > service_dt:
                         # Match user with vehicle
                         if type(self).__name__ == 'VehicleSharingMobilityService':
