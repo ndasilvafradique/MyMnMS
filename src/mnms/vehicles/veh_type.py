@@ -197,7 +197,7 @@ class VehicleActivityPickup(VehicleActivity):
         self.user.vehicle = veh
         veh.passengers[self.user.id] = self.user
         self.user.set_state_inside_vehicle()
-        print('Pick up', veh.id, f'{len(veh.passengers)}/{veh.capacity}', veh.passengers)
+        print('Pick up', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}', veh.passengers)
         self.is_done = True
         return True
 
@@ -237,7 +237,7 @@ class VehicleActivityServing(VehicleActivity):
         self.user.vehicle = None
         veh.passengers.pop(self.user.id)
         if veh.is_public_transport():
-            print('Serving', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
+            print('Serving', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}')
 
         self.user.remaining_link_length = 0
         upath = self.user.path.nodes
@@ -572,8 +572,9 @@ class Vehicle(TimeDependentSubject):
     def execute_activity(self, activity, tcurrent):
         if not activity.is_done:
             activity.execute(self, tcurrent)
-            self._activities[self.current_node].remove(activity)
-            #print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
+            print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
+            #self._activities[self.current_node].remove(activity)
+            #print('Removed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
         else:
             print(f'Activity {activity.activity_type} already executed for {self.type} {self.id} at {activity.node}')
 

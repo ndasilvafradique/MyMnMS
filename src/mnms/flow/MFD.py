@@ -277,13 +277,12 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 if int(veh_id) == 13:
                     print('Tram 13 reached station', veh.current_node, veh._activities[veh.current_node])
                 activities = veh._activities[veh._current_node]
-                #print(f'Execute activities for {veh.type} {veh.id}')
                 for activity in activities:
                     #print(f'I want to execute a {activity.activity_type} on {veh.type} {veh.id} for {activity.user}')
-                    if activity.activity_type != ActivityType.PICKUP or len(veh.passengers) < veh.capacity:
+                    if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
                         veh.execute_activity(activity, self._tcurrent)
                     else:
-                        #print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
+                        print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
                         users_to_replan.add(activity.user)
                         veh.remove_activities_of([activity.user])
             if int(veh_id) == 13:
