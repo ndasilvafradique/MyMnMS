@@ -84,7 +84,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         Returns:
             -selected_path: path chosen
         """
-        print('N PATHS:', len(paths))
+        print('N PATHS:', len(paths), 'found for user', uid)
         if len(paths) > 1:
             cost_score = [p.path_cost for p in paths]
             CI_score = [0 for i in range(len(paths))]

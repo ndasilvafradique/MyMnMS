@@ -175,17 +175,9 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             Returns
         """
         dist_travelled = dt * speed
-        users_to_replan = set()
         if dist_travelled > veh._remaining_link_length:
             dist_travelled = veh._remaining_link_length
-            # if not veh.has_reached_terminus():
             elapsed_time = dist_travelled / speed
-            # else:
-            #     elapsed_time = dt
-
-            if int(veh.id) == 13:
-                print(f'Moving Tram 13 {elapsed_time}')
-
             veh.update_distance(dist_travelled)
             veh._remaining_link_length = 0
             # veh.update_achieved_path()
@@ -194,34 +186,22 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             # al nodo successivo e può eseguire le attività di quel nodo
             veh.move()
             veh._reached_station = True
-            # activities = veh._activities[veh._current_node]
-            # for activity in activities:
-            #     if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
-            #         veh.execute_activity(activity, tcurrent)
-            #     else:
-            #         users_to_replan.add(activity.user)
-            # if len(users_to_replan):
-            #     veh.remove_activities_of(users_to_replan)
-
-            # if not veh.is_moving:
-            #     elapsed_time = dt
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position,
                                        tcurrent)
                 print(f'Passenger {passenger_id} set position to {passenger.position}')
-            return elapsed_time, users_to_replan
+            return elapsed_time#, users_to_replan
         else:
             #print(f'Still travelling {veh.type} {veh.id} on {veh.current_link} {dist_travelled} < {veh.remaining_link_length}')
             veh._reached_station = False
             veh._remaining_link_length -= dist_travelled
-            if int(veh.id) == 13:
-                print(f'Dist travelled Tram 13 remaining link length {veh.remaining_link_length} Dist travelled {dist_travelled}')
             veh.update_distance(dist_travelled)
             self.set_vehicle_position(veh)
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position,
                                        tcurrent)
-            return dt, users_to_replan
+            #return dt
+            return 0
 
     def get_vehicle_zone(self, veh):
         try:
@@ -272,26 +252,23 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         users_to_replan = set()
 
         for veh_id, veh in self.veh_manager._vehicles.items():
-            #print(f'REACHED A STATION {veh.type} {veh.id} {veh.current_node} - IS MOVING {veh.is_moving} - {veh._activities}')
+            #print(f'REACHED A STATION {veh.type} {veh.id} {veh.current_node} - IS MOVING {veh.is_moving}')
             if veh._reached_station:
-                if int(veh_id) == 12:
-                    print('Tram 13 reached station', veh.current_node, veh._activities[veh.current_node])
                 activities = veh._activities[veh._current_node]
                 for activity in activities:
                     #print(f'I want to execute a {activity.activity_type} on {veh.type} {veh.id} for {activity.user}')
                     if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
                         veh.execute_activity(activity, self._tcurrent)
                     else:
-                        print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
+                        #print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
                         users_to_replan.add(activity.user)
                         veh.remove_activities_of([activity.user])
-            if int(veh_id) == 12:
-                print('Tram 13 is moving:', veh.is_moving)
             if veh.is_moving:
+                #print(f'{veh.type} {veh.id} is moving:', veh.is_moving)
                 self.count_moving_vehicle(veh, current_vehicles)
 
         if len(users_to_replan):
-            print('Users to replan:', users_to_replan)
+            print('Users to replan [capacity limits]:', users_to_replan)
         log.info(f"Moving {len(current_vehicles)} vehicles")
         print(f"Moving N vehicles: {len(current_vehicles)}")
 
@@ -301,28 +278,25 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
 
         # Move the vehicles
         for veh_id, veh in current_vehicles.items():
-            veh_dt = veh.dt_move.to_seconds() if veh.dt_move is not None else dt.to_seconds()
-            veh.dt_move = None
+            #veh_dt = veh.dt_move.to_seconds() if veh.dt_move is not None else dt.to_seconds()
+            #veh.dt_move = None
+            veh_dt = dt.to_seconds()
             veh_type = veh.type.upper()
-            # print(f'VEHICLE {veh.type} {veh_id} {veh_dt} > 0 is {veh_dt > 0}')
+            #print(f'VEHICLE {veh.type} {veh_id} {veh_dt} > 0 is {veh_dt > 0}')
             # while veh_dt > 0:
             res_id = self.get_vehicle_zone(veh)
-            if int(veh_id) == 12:
-                print(f'Tram 12', veh._current_link, 'Remaining link length:', veh.remaining_link_length,
-                      'speed:', speed, 'zone id:', res_id)
             speed = self.dict_speeds[res_id][veh_type]
             veh.speed = speed
-            elapsed_time, other_users_to_replan = self.move_veh(veh, self._tcurrent, veh_dt, speed)
-            users_to_replan = users_to_replan.union(other_users_to_replan)
+            elapsed_time = self.move_veh(veh, self._tcurrent, veh_dt, speed)
             next_res_id = self.get_vehicle_zone(veh)
             if next_res_id != res_id:
                 # Vehicle exited the reservoir, register a new trip length in the left reservoir
                 self.reservoirs[res_id].add_trip_length(veh.distance - veh.distance_at_last_res_change, veh_type)
                 veh.distance_at_last_res_change = veh.distance
-            # veh_dt -= elapsed_time
-            # if int(veh_id) == 13:
-            #     print(f'Update veh_dt {veh_dt+elapsed_time} - {elapsed_time} =', veh_dt)
-            new_time = self._tcurrent.add_time(dt)
+            veh_dt -= elapsed_time
+            #new_time = self._tcurrent.add_time(dt)
+            print(f'VEHICLE {veh.type} {veh_id} add {veh_dt} seconds to {self._tcurrent}')
+            new_time = self._tcurrent.add_time(Dt(seconds=veh_dt))
             veh.notify(new_time)
             veh.notify_passengers(new_time)
 

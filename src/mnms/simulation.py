@@ -238,7 +238,7 @@ class Supervisor(object):
             for ms in layer.mobility_services.values():
                 log.info(f' Perform matching for mobility service {ms.id}...')
                 start = time()
-                #print('Launch matching for', [x.id for x in new_users], 'flow_dt', flow_dt)
+                print('Launch matching for', [x.id for x in new_users], 'flow_dt', flow_dt)
                 ms.launch_matching(new_users, self._user_flow, self._decision_model, flow_dt)
                 end = time()
                 log.info(f' Matching for mobility service {ms.id} done in [{end - start:.5} s]')
@@ -278,6 +278,7 @@ class Supervisor(object):
         new_users = []
         if self._demand:
             new_users = self._demand.get_next_departures(self.tcurrent, self.tcurrent.add_time(principal_dt))
+            print()
             self._demand.construct_user_parameters(new_users)
         log.info(f'Getting next departures done: {len(new_users)} new departures')
 
@@ -367,16 +368,16 @@ class Supervisor(object):
 
                 # Gather users who depart during this flow step
                 users_step, new_users = self.get_users_step(new_users, flow_dt)
-                log.info(f'Users step:{users_step}')
+                print(f'Users step: {users_step} new users: {new_users}')
 
                 # Call update of all mobility services, update means maintenance
                 self.call_update_mobility_services(flow_dt)
 
                 # Call user flow step
                 users_reach_dt_answer = self.call_user_flow_step(flow_dt, users_step)
+                print('DEMAND USER', users_reach_dt_answer)
                 self._decision_model.add_users_for_planning(users_reach_dt_answer, [Event.MATCH_FAILURE]*len(users_reach_dt_answer))
-                if len(users_reach_dt_answer):
-                    print('DEMAND', [x for x in users_reach_dt_answer])
+
 
                 # Call dynamic space sharing step
                 self.step_dynamic_space_sharing()
@@ -389,7 +390,7 @@ class Supervisor(object):
                 for u in users_to_replan:
                     # Interrupt user's path but keep user in the list of user_flow
                     u.interrupt_path(self.tcurrent)
-                    print('replan', u)
+                    print('Interrupt path and replan users', u)
                 self._decision_model.add_users_for_planning(list(users_to_replan), [Event.INTERRUPTION]*len(users_to_replan))
 
                 if self._flow_motor._write:

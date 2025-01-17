@@ -183,6 +183,7 @@ class AbstractDecisionModel(ABC):
             -users: list of users to add
             -events: corresponding list of events which triggered the need for (re)planning
         """
+        print('Add users for planning', users)
         if users and events:
             assert len(users) == len(events), f'The list of users and events should have the same length.'
             users_already_in_list = list(zip(*self._users_for_planning))
@@ -207,7 +208,7 @@ class AbstractDecisionModel(ABC):
             if 'TRANSIT' not in user.forced_path_chosen_mobility_services.keys():
                 user.forced_path_chosen_mobility_services['TRANSIT'] = 'WALK'
             user.path.set_mobility_services([user.forced_path_chosen_mobility_services[l] for l,_ in user.path.layers])
-        log.info(f'User {user.id} do not plan at departure, use forced path {user.path}')
+        print(f'User {user.id} do not plan at departure, use forced path {user.path}')
 
     def review_availability_of_personal_mob_services(self, u: User, e: Event, gnodes):
         """Method that eventually remove the personal mobility services from user's available services and
@@ -445,7 +446,7 @@ class AbstractDecisionModel(ABC):
             u_layers.add('TRANSIT')
 
             ## For each mob services combination, compute k shortest paths
-            #log.info(f'User {u.id} will compute {len(all_ams_combinations)}x{k} shortest paths')
+            #print(f'User {u.id} will compute {len(all_ams_combinations)}x{k} shortest paths')
             for ams_combination in all_ams_combinations:
                 ams_combination_set = set(ams_combination)
                 ams_combination_set.add('WALK')
@@ -459,13 +460,13 @@ class AbstractDecisionModel(ABC):
                             u_saved_paths_of_this_ms_combination_cond1 = [set(sp.mobility_services).issubset(ams_combination_set) for sp in u_saved_paths]
                             u_saved_paths_of_this_ms_combination_cond2 = [True if (set([l for l,_ in sp.layers]) & intermodality[0]) and \
                                 (set([l for l,_ in sp.layers]) & intermodality[1]) else False for sp in u_saved_paths]
-                            #log.info(f'User {u.id} , intermodality={intermodality}, u_saved_paths={u_saved_paths}')
+                            #print(f'User {u.id} , intermodality={intermodality}, u_saved_paths={u_saved_paths}')
                             u_saved_paths_of_this_ms_combination = [c1 and c2 for c1,c2 in zip(u_saved_paths_of_this_ms_combination_cond1,u_saved_paths_of_this_ms_combination_cond2)]
                         nb_saved_paths_of_this_ms_combination = sum(u_saved_paths_of_this_ms_combination)
                         #if nb_saved_paths_of_this_ms_combination > 0 and nb_saved_paths_of_this_ms_combination < k:
-                        #    log.info(f'User {u.id} already found some paths for modes combination {ams_combination} but not enough ({nb_saved_paths_of_this_ms_combination}/{k})')
+                        #    print(f'User {u.id} already found some paths for modes combination {ams_combination} but not enough ({nb_saved_paths_of_this_ms_combination}/{k})')
                         if nb_saved_paths_of_this_ms_combination == k:
-                            #log.info(f'User {u.id} already found the proper nb of paths for modes combination {ams_combination}')
+                            #print(f'User {u.id} already found the proper nb of paths for modes combination {ams_combination}')
                             continue
                         # NB: even if we have found some paths for this mode combination, we still look for k cause we may find the same as the one already saved...
                         # TODO: how to improve this?
@@ -481,7 +482,7 @@ class AbstractDecisionModel(ABC):
                             f' check what to do, for now we take the first arbitrarily ! (user intersection = {intersection})')
                     if len(intersection) >= 1:
                         u_origin = personal_ms_planning_origins[u.id][list(intersection)[0]]
-                        log.info(f'User {u.id} consider planning origin {u_origin} to be able to access personal mob service {list(intersection)[0]}')
+                        print(f'User {u.id} consider planning origin {u_origin} to be able to access personal mob service {list(intersection)[0]}')
 
                 # Append all info to the proper lists
                 uids.append(u.id)
@@ -516,7 +517,7 @@ class AbstractDecisionModel(ABC):
                 ## Some paths have been found
                 chosen_path = self.path_choice(user_paths, uid, tcurrent)
                 # print(f'User {user.id} chosen path {chosen_path}')
-                log.info(f"User {user.id} chose path {chosen_path} after {event} among {len(user_paths)} shortest paths for this round of (re)planning (state={user.state}).")
+                print(f"User {user.id} chose path {chosen_path} after {event} among {len(user_paths)} shortest paths for this round of (re)planning (state={user.state}).")
 
                 if self._write:
                     # Write down the chosen path only
@@ -723,7 +724,7 @@ class AbstractDecisionModel(ABC):
 
     def __call__(self, tcurrent: Time):
         ### If no user require a (re)planning, do nothing
-        log.info(f'There are {len(self._users_for_planning)} users that are going to (re)plan their journey')
+        print(f'There are {len(self._users_for_planning)} users that are going to (re)plan their journey')
         if len(self._users_for_planning) == 0:
             return
 
@@ -734,6 +735,7 @@ class AbstractDecisionModel(ABC):
         personal_ms_planning_origins = self._manage_users_after_event(users_paths, tcurrent)
 
         ### If self.considered_modes is not defined, proceed to the default paths discovery
+        print('PATH DISCOVERY CONSIDERED MODES', self._considered_modes)
         if self._considered_modes is None:
             ## Gather inputs for the HiPOP call
             subgraph_layers = list(self._mlgraph.layers.values())
@@ -771,7 +773,7 @@ class AbstractDecisionModel(ABC):
         else:
             ### Proceed iteratively in the order of considered modes list
             for considered_mode in self._considered_modes:
-                log.info(f'Path discovery for mode {considered_mode}')
+                print(f'Path discovery for mode {considered_mode}')
                 ## Gather inputs for the HiPOP call while checking if the paths searched have already been found and saved
                 subgraph_layers = [l for l in self._mlgraph.layers.values() if l._id in considered_mode[0]]
                 k = considered_mode[2]
@@ -785,6 +787,7 @@ class AbstractDecisionModel(ABC):
                         uids, origins, destinations, available_layers, chosen_mservices, nb_paths, users_paths, intermodality=considered_mode[1])
 
                 ## Compute the shorest paths in parallel with the proper method
+                print('CONSIDERED MODES', considered_mode)
                 if considered_mode[1] is None:
                     try:
                         paths = parallel_k_shortest_path(self._mlgraph.graph,
@@ -825,6 +828,7 @@ class AbstractDecisionModel(ABC):
 
 
         ### Path selection
+        print('HIPOP USED TO FIND USERS PATHS', users_paths)
         self.path_selection(users_paths, tcurrent)
 
     def compute_path(self, origin: str, destination: str, accessible_layers: Set[str], chosen_services: Dict[str, str]):
@@ -892,7 +896,7 @@ class AbstractDecisionModel(ABC):
                 new_available_layers.append(available_layers[i])
                 new_chosen_mservices.append(mss)
                 new_nb_paths.append(k)
-        log.info(f'{len(uids)-len(new_uids)} / {len(uids)} are reapplied from saved routes')
+        print(f'{len(uids)-len(new_uids)} / {len(uids)} are reapplied from saved routes')
         return new_uids, new_origins, new_destinations, new_available_layers, new_chosen_mservices, new_nb_paths, users_paths
 
     def save_computed_route(self, path_nodes, chosen_mservices, intermodality):

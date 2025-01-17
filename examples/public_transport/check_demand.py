@@ -134,14 +134,14 @@ if __name__ == '__main__':
                                           '45.73797438765062 4.922112189478452',
                                           '45.73898535652272 4.926770143919575',
                                           '45.76168877310396 4.856159993712235',
-                                          '45.75791079314419 4.832043966457701',
+                                          '45.76078239352663, 4.834094344748039',
                                           '45.73362213384172 4.818299543365892',
                                           '45.73207539436152 4.947950762182816']})
 
     demandes = pd.DataFrame({'ID': ['U0', 'U1', 'U3'],
                              'DEPARTURE': ['08:20:00', '08:22:00', '08:22:00'],
                              'ORIGIN':  ['Eurexpo', 'ParcduChene', 'ParcduChene'],
-                             'DESTINATION': ['GrangeBlanche', 'TDeTassignyCurial', 'GrangeBlanche']
+                             'DESTINATION': ['GrangeBlanche', 'Bellecour', 'Confluances']
                              # 'ORIGIN': ['GrangeBlanche', 'GrangeBlanche', 'GrangeBlanche'],
                              # 'DESTINATION': ['ParcduChene', 'ParcduChene', 'ParcduChene']
                              })

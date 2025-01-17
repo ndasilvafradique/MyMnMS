@@ -119,7 +119,7 @@ class UserFlow(object):
                         self.set_user_position(user)
                         user.notify(arrival_time.time)
                         if next_node == upath[-1]:
-                            print(f'User {user.id} arrived.')
+                            print(f'User {user.id} arrived at {arrival_time}.')
                             # User arrived at last node of her planned path
                             user.finish_trip(arrival_time)
                             finish_trip.append(user)
@@ -131,18 +131,20 @@ class UserFlow(object):
                                 user.set_state_deadend(arrival_time)
                                 finish_walk.append(user)
                                 dist_travelled = 0
+                                print(f'User {user.id} DEADEND at {arrival_time}.')
                             else:
                                 cnode_ind = user.get_current_node_index()
                                 next_next_node = upath[cnode_ind + 1]
                                 next_link = gnodes[user.current_node].adj[next_next_node]
                                 if next_link.label == 'TRANSIT':
                                     # User keeps walking
-                                    log.info(f"User {uid} enters connection on {next_link.id}")
+                                    print(f"User {uid} enters connection on {next_link.id} at {arrival_time}.")
                                     dist_travelled = dist_travelled - remaining_length
                                     self._walking[uid] = next_link.length
                                     user.current_link = (user.current_node, next_next_node)
                                 else:
                                     # User stops walking
+                                    print(f"User {uid} stopped walking at {arrival_time}.")
                                     user.set_state_stop()
                                     finish_walk_and_request.append((user, arrival_time))
                                     dist_travelled = 0
@@ -155,6 +157,7 @@ class UserFlow(object):
                         dist_travelled = 0
             else:
                 # User is not walking anymore for an external reason, e.g. DEADEND
+                print(f'User not walking {user.id} {user.state} {user.current_node} {user.path}')
                 finish_walk.append(user)
 
         for user in finish_walk:
@@ -162,7 +165,7 @@ class UserFlow(object):
 
         for user, request_time in finish_walk_and_request:
             del self._walking[user.id]
-            log.info(f'User {user.id} is about to request a vehicle because he has finished walking')
+            print(f'User {user.id} is about to request a vehicle because he has finished walking')
             user.set_state_waiting_answer()
             requested_mservice = self._request_user_vehicles(user, request_time)
             self._waiting_answer.setdefault(user.id, (user.response_dt.copy(),requested_mservice))
@@ -184,6 +187,7 @@ class UserFlow(object):
             -mservice: the mobility service to which the request was sent (None if
                        no relevant mobility service was found for the request)
         """
+
         if user.path is not None:
             upath = user.path.nodes
             print('User path:', user.id, user.path.nodes)
@@ -198,16 +202,19 @@ class UserFlow(object):
                 if slice_nodes.start == ind_node_start:
                     mservice_id = user.path.mobility_services[ilayer]
                     mservice = self._graph.layers[layer].mobility_services[mservice_id]
-                    log.info(f"User {user.id} requests mobility service {mservice._id}")
+                    print(f"User {user.id} requests mobility service {mservice._id}")
                     print(f'{user.id} Mservice.add_request({upath[slice_nodes][-1]}, ...) ', upath, slice_nodes)
                     mservice.add_request(user, upath[slice_nodes][-1], request_time)
                     user.requested_service = mservice
                     return mservice
             else:
                 log.warning(f"No mobility service found for user {user.id}")
+                print(f"No mobility service found for user {user.id}")
         else:
             log.warning(f'User {user.id} has no path, cannot find any mobility service '\
                 'to which formulating a request.')
+            print(f'User {user.id} has no path, cannot find any mobility service ' \
+                        'to which formulating a request.')
         return None
 
     def step(self, dt: Dt, new_users: List[User]):
@@ -221,14 +228,18 @@ class UserFlow(object):
             -refused_users: the list of users who can be considered as refused by the
                             mobility service they requested
         """
-        log.info(f"Step User Flow {self._tcurrent}")
+        print(f"Step User Flow {self._tcurrent} {new_users}")
         self._gnodes = self._graph.graph.nodes
 
         refused_user = self.check_user_waiting_answers(dt)
+        print(f'Refused users: {refused_user} at {self._tcurrent}')
 
         for u in new_users:
             if u.path is not None:
                 self.users[u.id] = u
+                print('User path not none:', u.id, u.path.nodes)
+            else:
+                print(f'User {u.id} has no path, cannot find any mobility service to which formulating a request.')
 
         self.determine_user_states()
 
@@ -241,7 +252,7 @@ class UserFlow(object):
         """
         to_del = list()
         for u in self.users.values():
-            print(f'Determine user state {u.state}')
+            print(f'Determine user {u.id} state {u.state}')
             if u.state is UserState.STOP and u.path is not None:
                 upath = u.path.nodes
                 cnode = u.current_node
@@ -258,14 +269,14 @@ class UserFlow(object):
                     u.notify(self._tcurrent)
                 elif next_link.label == "TRANSIT":
                     # User is about to walk
-                    log.info(f"User {u.id} enters connection on {next_link.id}")
+                    print(f"User {u.id} enters connection on {next_link.id}")
                     u.set_state_walking()
                     self._walking[u.id] = next_link.length
                 else:
                     # User is about to request a service
                     self._walking.pop(u.id, None)
                     u.set_state_waiting_answer()
-                    log.info(f'User {u.id} is about to request a vehicle because he is stopped')
+                    print(f'User {u.id} is about to request a vehicle because he is stopped')
                     requested_mservice = self._request_user_vehicles(u, self._tcurrent)
                     self._waiting_answer.setdefault(u.id, (u.response_dt.copy(),requested_mservice))
 
@@ -286,22 +297,27 @@ class UserFlow(object):
         to_del = list()
         refused_users = list()
 
+        print(f'CHECK USER WAITING ANSWER {self._waiting_answer.items()}')
+
         for uid, (time, requested_mservice) in self._waiting_answer.items():
             if self.users[uid].state is UserState.WAITING_ANSWER:
                 new_time = time.to_seconds() - dt.to_seconds()
                 if new_time <= 0:
-                    log.info(f"User {uid} waited answer too long, cancels request for {requested_mservice._id}")
+                    print(f"User {uid} waited answer too long, cancels request for {requested_mservice._id}")
                     requested_mservice.cancel_request(uid)
                     refused_users.append(self.users[uid])
                     # Interrupt user's path but keep user in the list of user_flow
                     self.users[uid].interrupt_path(self._tcurrent)
                     to_del.append(uid)
                 else:
+                    print(f"User {uid} check user waiting answer [else]")
                     self._waiting_answer[uid] = (Time.from_seconds(new_time), requested_mservice)
             else:
                 # User is not waiting answer anymore
+                print(f"User no waiting answer anymore {uid}")
                 to_del.append(uid)
 
+        print(f'Deleting user waiting answer {to_del}')
         for uid in to_del:
             self._waiting_answer.pop(uid)
 
@@ -333,8 +349,11 @@ class UserFlow(object):
                 path_links = [(unodes[i],unodes[i+1]) for i in range(len(unodes)-1)]
                 intersect = set(deleted_links).intersection(set(path_links))
                 if len(intersect) > 0:
-                    log.info(f"User {u.id} was supposed to pass through links {intersect} which were deleted, '\
+                    print(f"User {u.id} was supposed to pass through links {intersect} which were deleted, '\
                         f'trigger an INTERRUPTION event (current node = {u.current_node}, state = {u.state})")
+                    print(f"User {u.id} was supposed to pass through links {intersect} which were deleted, '\
+                                           f'trigger an INTERRUPTION event (current node = {u.current_node}, state = {u.state})")
+
                     interrupted_users.append(u)
                     # Clean eventual request already formulated by user to this service
                     if u.id in service._user_buffer.keys():

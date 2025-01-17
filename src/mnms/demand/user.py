@@ -95,9 +95,11 @@ class User(TimeDependentSubject):
         self._deadend_at_next_node = False
 
         if path is None:
+            print(f'Init user {self.id} none path')
             self.path: Optional[Path] = None
             self.forced_path_chosen_mobility_services = None
         else:
+            print(f'Init user {self.id} setting path', path)
             self.set_path(path)
             self.forced_path_chosen_mobility_services = forced_path_chosen_mobility_services
 
@@ -305,7 +307,7 @@ class User(TimeDependentSubject):
         """
         self.arrival_time = arrival_time
         self.set_state_arrived()
-        log.info(f"User {self.id} arrived at destination at {arrival_time}")
+        print(f"User {self.id} arrived at destination at {arrival_time}")
         self.notify(arrival_time)
 
     def set_pickup_dt(self, ms, dt):
@@ -313,11 +315,11 @@ class User(TimeDependentSubject):
 
     def set_available_mobility_services(self, ams):
         self.available_mobility_services = ams
-        log.info(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
+        print(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
 
     def remove_available_mobility_service(self, ms):
         self.available_mobility_services.remove(ms)
-        log.info(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
+        print(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
 
     def cancel_match(self, mlgraph, cost):
         """Method that cancels user's current match by removing user's pickup and
@@ -354,7 +356,7 @@ class User(TimeDependentSubject):
         # Find old part in user's path
         st_end_indices = find_sublist_in_list(old_part, self.path.nodes)
         if len(st_end_indices) != 1:
-            log.error(f'Cannot find or found several times old part {old_part} of user {self.id} path {self.path.nodes}...')
+            print(f'Cannot find or found several times old part {old_part} of user {self.id} path {self.path.nodes}...')
             sys.exit(-1)
         # Override this old part
         start_idx, end_idx = st_end_indices[0]
@@ -425,7 +427,7 @@ class User(TimeDependentSubject):
         teleported = False
         if path_first_node_ind == -1 or path_first_node_ind < current_node_ind:
             if max_teleport_dist is None:
-                log.error(f'User {self.id} tried to update path with current node index = {current_node_ind} '\
+                print(f'User {self.id} tried to update path with current node index = {current_node_ind} '\
                     f'and new path first node index = {path_first_node_ind} without the possibility to teleport.')
                 sys.exit(-1)
             else:
@@ -482,7 +484,7 @@ class User(TimeDependentSubject):
                     new_mobservices.extend(path.mobility_services)
                 new_drop_node = None
             else:
-                log.error(f'Case not yet developped update_path with {self.state} user')
+                print(f'Case not yet developped update_path with {self.state} user')
                 sys.exit(-1)
             new_path.set_mobility_services(new_mobservices)
             new_path.update_path_cost(mlgraph, cost)
@@ -673,7 +675,7 @@ class User(TimeDependentSubject):
             log.warning(f'User {self.id} teleport from {self.current_node} ({teleport_origin}) to {dnode.id} ({dnode.position}) for {dist} meters')
             teleported = True
         elif dist > max_teleport_dist and dist > 0:
-            log.error(f'User {self.id} tried to teleport from {self.current_node} to {dnode.id} for {dist} meters: it is prohibited ! ')
+            print(f'User {self.id} tried to teleport from {self.current_node} to {dnode.id} for {dist} meters: it is prohibited ! ')
             sys.exit(-1)
 
         if teleported:
@@ -702,6 +704,7 @@ class User(TimeDependentSubject):
         self.position = position
         self.update_achieved_path(current_node)
         if self.deadend_at_next_node:
+            print(f'User {self.id} is deadend at next node, current is', self.current_node)
             self.set_state_deadend(tcurrent)
 
     def update_achieved_path(self, reached_node):
@@ -783,7 +786,8 @@ class User(TimeDependentSubject):
             if slice_nodes.start == ind_current_node:
                 failed_mservice = self.interrupted_path.mobility_services[ilayer]
                 return failed_mservice
-        log.error(f'Could not find back the mobility service for which user {self.id} undergone a match failure')
+        print(f'Could not find back the mobility service for which user {self.id} undergone a match failure')
+        print(f'Could not find back the mobility service for which user {self.id} undergone a match failure')
         sys.exit(-1)
 
     def add_personal_vehicle(self, mid, veh):
