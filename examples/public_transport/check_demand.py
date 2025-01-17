@@ -128,19 +128,23 @@ def to_lambert93(coordinates):
 
 if __name__ == '__main__':
     # Convert from lat/lon to Lambert-93
-    coordinates = pd.DataFrame({'NAME': ['GrangeBlanche', 'TDeTassignyCurial', 'LyceeJPSartre', 'ParcduChene', 'Westfield', 'Bellecour', 'Confluances'],
+    coordinates = pd.DataFrame({'NAME': ['GrangeBlanche', 'TDeTassignyCurial', 'LyceeJPSartre', 'ParcduChene', 'Westfield', 'Bellecour', 'Confluances', 'Eurexpo'],
                                 'COORD': ['45.742475491911755 4.879416016663879',
                                           '45.73572771803042 4.916971331306854',
                                           '45.73797438765062 4.922112189478452',
                                           '45.73898535652272 4.926770143919575',
                                           '45.76168877310396 4.856159993712235',
                                           '45.75791079314419 4.832043966457701',
-                                          '45.73362213384172 4.818299543365892']})
+                                          '45.73362213384172 4.818299543365892',
+                                          '45.73207539436152 4.947950762182816']})
 
     demandes = pd.DataFrame({'ID': ['U0', 'U1', 'U3'],
-                             'DEPARTURE': ['08:20:00', '08:20:00', '08:20:00'],
-                             'ORIGIN': ['GrangeBlanche', 'GrangeBlanche', 'GrangeBlanche'],
-                             'DESTINATION': ['ParcduChene', 'ParcduChene', 'ParcduChene']})
+                             'DEPARTURE': ['08:20:00', '08:22:00', '08:22:00'],
+                             'ORIGIN':  ['Eurexpo', 'ParcduChene', 'ParcduChene'],
+                             'DESTINATION': ['GrangeBlanche', 'TDeTassignyCurial', 'GrangeBlanche']
+                             # 'ORIGIN': ['GrangeBlanche', 'GrangeBlanche', 'GrangeBlanche'],
+                             # 'DESTINATION': ['ParcduChene', 'ParcduChene', 'ParcduChene']
+                             })
 
     demandes = demandes.merge(coordinates, left_on=['ORIGIN'], right_on=['NAME'], how='left')
     demandes.drop(columns=['ORIGIN'], inplace=True)

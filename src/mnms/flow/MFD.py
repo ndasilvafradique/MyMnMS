@@ -272,9 +272,9 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         users_to_replan = set()
 
         for veh_id, veh in self.veh_manager._vehicles.items():
-            #print(f'REACHED A STATION {veh.type} {veh.id} {veh.current_node} - IS MOVING {veh.is_moving}')
+            #print(f'REACHED A STATION {veh.type} {veh.id} {veh.current_node} - IS MOVING {veh.is_moving} - {veh._activities}')
             if veh._reached_station:
-                if int(veh_id) == 13:
+                if int(veh_id) == 12:
                     print('Tram 13 reached station', veh.current_node, veh._activities[veh.current_node])
                 activities = veh._activities[veh._current_node]
                 for activity in activities:
@@ -285,12 +285,13 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                         print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
                         users_to_replan.add(activity.user)
                         veh.remove_activities_of([activity.user])
-            if int(veh_id) == 13:
+            if int(veh_id) == 12:
                 print('Tram 13 is moving:', veh.is_moving)
             if veh.is_moving:
                 self.count_moving_vehicle(veh, current_vehicles)
 
-        print('Users to replan:', users_to_replan)
+        if len(users_to_replan):
+            print('Users to replan:', users_to_replan)
         log.info(f"Moving {len(current_vehicles)} vehicles")
         print(f"Moving N vehicles: {len(current_vehicles)}")
 
@@ -306,8 +307,8 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             # print(f'VEHICLE {veh.type} {veh_id} {veh_dt} > 0 is {veh_dt > 0}')
             # while veh_dt > 0:
             res_id = self.get_vehicle_zone(veh)
-            if int(veh_id) == 13:
-                print(f'Tram 13', veh._current_link, 'Remaining link length:', veh.remaining_link_length,
+            if int(veh_id) == 12:
+                print(f'Tram 12', veh._current_link, 'Remaining link length:', veh.remaining_link_length,
                       'speed:', speed, 'zone id:', res_id)
             speed = self.dict_speeds[res_id][veh_type]
             veh.speed = speed

@@ -501,10 +501,10 @@ class Vehicle(TimeDependentSubject):
         self._achieved_path_since_last_notify = []
 
     activity_order = {
-        ActivityType.STOP.value: 0,
-        ActivityType.REPOSITIONING.value: 1,  # Use .value here
+        ActivityType.REPOSITIONING.value: 1,
         ActivityType.SERVING.value: 2,
         ActivityType.PICKUP.value: 3,
+        ActivityType.STOP.value: 4,
     }
 
     def sort_activities(self, activities):
@@ -531,19 +531,13 @@ class Vehicle(TimeDependentSubject):
 
     def move(self):
         if len(self.vehicle_path_link) > 1:
-            #if not self._starting_node:
             self.vehicle_path_nodes = self.vehicle_path_nodes[1:]
             self._current_node = self.vehicle_path_nodes[0]
             self.vehicle_path_link = self.vehicle_path_link[1:]
             self._current_link = self.vehicle_path_link[0][0]
             self._remaining_link_length = self.vehicle_path_link[0][1]
-                #print(f'Moving {self.type} {self.id} {self._current_node} LINK: {self._current_link}')
-                #return False
-            # else:
-            #     #print(f'Start of line {self.type} {self.id} {self._current_node} LINK: {self._current_link} ')
             self._has_reached_terminus = False
             self._starting_node = False
-            #     return True
         else:
             self._current_node = self.vehicle_path_nodes[-1]
             self._current_link = self.vehicle_path_link[0][0]
@@ -571,12 +565,13 @@ class Vehicle(TimeDependentSubject):
 
     def execute_activity(self, activity, tcurrent):
         if not activity.is_done:
+            self.current_activity_type = activity.activity_type
             activity.execute(self, tcurrent)
-            print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
+            # print('Executed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
             #self._activities[self.current_node].remove(activity)
             #print('Removed', activity.activity_type, activity.user.id if activity.user is not None else '', activity.is_done)
-        else:
-            print(f'Activity {activity.activity_type} already executed for {self.type} {self.id} at {activity.node}')
+        # else:
+        #     print(f'Activity {activity.activity_type} already executed for {self.type} {self.id} at {activity.node}')
 
     def next_activity(self, tcurrent: Time):
         if self.activity is not None:

@@ -267,7 +267,6 @@ class PublicTransportMobilityService(AbstractMobilityService):
             capacity = self.capacity_info[lid]
             new_veh = self.fleet.create_vehicle(start_node,
                                                 capacity=capacity,
-                                                # capacity=self._veh_capacity,
                                                 activities=[VehicleActivityStop(node=end_node,
                                                                                 path=veh_path)],
                                                 vehicle_path_link=veh_path_link,
@@ -285,13 +284,12 @@ class PublicTransportMobilityService(AbstractMobilityService):
             # Proceed to the departure
             start_veh = self._next_veh_departure[lid][1]
             log.info(f"Vehicle {start_veh.id} of type {type(start_veh).__name__} starts service on {self.id} line {lid}")
-            print(f"Vehicle {start_veh.type} {start_veh.id} STARTED JOURNEY at {time}")
+            print(f"Vehicle {start_veh.type} {start_veh.id} STARTED JOURNEY at {time} on LINE {lid}")
             repo_activity = VehicleActivityRepositioning(start_veh.vehicle_path_nodes[0],
                                                          start_veh.vehicle_path_link,
                                                          None)
             start_veh.add_activities([repo_activity])
             start_veh.execute_activity(repo_activity, time)
-            self._departing = True
             all_departures.append(start_veh)
             self.vehicles[lid].appendleft(start_veh)
 
@@ -446,6 +444,9 @@ class PublicTransportMobilityService(AbstractMobilityService):
         veh.add_activities([pu_activity, do_activity])
         print(f'Adding pickup activities for {veh.type} {veh.id} {pu_node} {[x.activity_type for x in veh._activities[pu_node]]}')
         print(f'Adding serving activities for {veh.type} {veh.id} {drop_node} {[x.activity_type for x in veh._activities[drop_node]]}')
+        print(f'UPDATED ACTIVITIES FOR {veh.type} {veh.id}')
+        for node in veh._activities:
+            print(f"    {node}: [{[x.activity_type for x in veh._activities[node]]}]")
 
 
     def estimation_pickup_time_at_match(self, user: User, veh: Vehicle, line_id: str, veh_dep_time: Time):
@@ -503,16 +504,14 @@ class PublicTransportMobilityService(AbstractMobilityService):
 
         # Select the proper line for user
         user_line_id, chosen_line = self.find_line(start)
-        print(f'Request self.gnodes[start].radj: {self.gnodes[start].radj}')
         if not self.gnodes[start].radj:
-            print('Request empty dict')
+            ## ENTRA SEMPRE IN QUESTO RAMO
             if self._next_veh_departure[user_line_id] is None:
                 return Dt(hours=24)
             departure_time, waiting_veh = self._next_veh_departure[user_line_id]
             print(f'Request user {user.id}, departure time{departure_time}, waiting veh {waiting_veh}')
             chosen_veh = waiting_veh
         else:
-            print('Request not empty dict')
             ind_start = chosen_line["nodes"].index(start)
             for veh in reversed(list(self.vehicles[user_line_id])):
                 ind_curr_veh = chosen_line["nodes"].index(veh.current_link[1])
@@ -603,6 +602,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         """
         _, chosen_line = self.find_line(pu_node)
         estimated_pickup_time = chosen_line['table'].get_freq() / 2
+        #estimated_pickup_time = chosen_line['table']
         return estimated_pickup_time
 
     def periodic_maintenance(self, dt: Dt):

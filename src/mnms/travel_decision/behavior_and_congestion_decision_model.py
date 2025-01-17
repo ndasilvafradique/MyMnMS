@@ -103,7 +103,6 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                     else:
                         line = ''
                     for x in paths[p].nodes[1:-1]:
-                        print('X', x)
                         if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
                             next_line = x.split('_')[0] + x.split('_')[1]
                             if line != next_line or i == 0:
