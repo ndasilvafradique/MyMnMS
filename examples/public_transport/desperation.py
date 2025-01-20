@@ -21,7 +21,7 @@ import json
 import pandas as pd
 
 indir = "INPUTS"
-outdir = "BASELINE"
+outdir = "OUTPUTS"
 
 # set_all_mnms_logger_level(LOGLEVEL.WARNING)
 set_mnms_logger_level(LOGLEVEL.INFO, ["mnms.simulation"])
@@ -127,8 +127,9 @@ if __name__ == '__main__':
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
+    ## BASELINE
     travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=1, beta=1, gamma=1,
-                                                     baseline=True, top_k=3, n_shortest_path=10)
+                                                     baseline=False, top_k=3, n_shortest_path=10)
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,
@@ -137,6 +138,6 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     start = time.time()
-    supervisor.run(Time('16:41:00'), Time('20:00:00'), Dt(seconds=30), 10)
+    supervisor.run(Time('16:44:00'), Time('20:00:00'), Dt(seconds=30), 1)
     end = time.time()
     print(f'SIMULATION COMPLETED IN {end-start} s')

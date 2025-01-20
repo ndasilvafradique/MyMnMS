@@ -417,7 +417,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
     #
     #     return all_departures
 
-    def add_passenger(self, user: User, drop_node: str, veh: Vehicle, line_nodes: List[str]):
+    def add_passenger(self, user: User, drop_node: str, veh: Vehicle, line_nodes: List[str], tcurrent: Time):
         """Method that updates a public transport vehicle plan by inserting user's pick-up and
         drop-off.
 
@@ -434,19 +434,26 @@ class PublicTransportMobilityService(AbstractMobilityService):
         pu_node_ind = line_nodes.index(pu_node)
         do_node_ind = line_nodes.index(drop_node)
 
-        assert pu_node_ind <= do_node_ind, f'Pickup index {pu_node_ind} should necessarily take place '\
-            f'before dropoff index {do_node_ind} on the public transport line for User {user.id}.'
+        try:
+            assert pu_node_ind <= do_node_ind, f'Pickup index {pu_node_ind} should necessarily take place '\
+                f'before dropoff index {do_node_ind} on the public transport line for User {user.id}.'
 
-        print(f'Adding passenger {user.id}: PICK UP at {pu_node}, DROP OFF at {drop_node}')
+            print(f'Adding passenger {user.id}: PICK UP at {pu_node}, DROP OFF at {drop_node}')
 
-        pu_activity = VehicleActivityPickup(node=pu_node, user=user)
-        do_activity = VehicleActivityServing(node=drop_node, user=user)
-        veh.add_activities([pu_activity, do_activity])
-        print(f'Adding pickup activities for {veh.type} {veh.id} {pu_node} {[x.activity_type for x in veh._activities[pu_node]]}')
-        print(f'Adding serving activities for {veh.type} {veh.id} {drop_node} {[x.activity_type for x in veh._activities[drop_node]]}')
-        # print(f'UPDATED ACTIVITIES FOR {veh.type} {veh.id}')
-        # for node in veh._activities:
-        #     print(f"    {node}: [{[x.activity_type for x in veh._activities[node]]}]")
+            pu_activity = VehicleActivityPickup(node=pu_node, user=user)
+            do_activity = VehicleActivityServing(node=drop_node, user=user)
+            veh.add_activities([pu_activity, do_activity])
+            print(f'Adding pickup activities for {veh.type} {veh.id} {pu_node} {[x.activity_type for x in veh._activities[pu_node]]}')
+            print(f'Adding serving activities for {veh.type} {veh.id} {drop_node} {[x.activity_type for x in veh._activities[drop_node]]}')
+            # print(f'UPDATED ACTIVITIES FOR {veh.type} {veh.id}')
+            #             # for node in veh._activities:
+            #             #     print(f"    {node}: [{[x.activity_type for x in veh._activities[node]]}]")
+            return True
+        except AssertionError:
+            print(F'User {user.id} query will be ignored.')
+            user.interrupt_path(tcurrent)
+            user.set_state_deadend(tcurrent)
+            return False
 
 
     def estimation_pickup_time_at_match(self, user: User, veh: Vehicle, line_id: str, veh_dep_time: Time):
@@ -505,7 +512,6 @@ class PublicTransportMobilityService(AbstractMobilityService):
         # Select the proper line for user
         user_line_id, chosen_line = self.find_line(start)
         if not self.gnodes[start].radj:
-            ## ENTRA SEMPRE IN QUESTO RAMO
             if self._next_veh_departure[user_line_id] is None:
                 return Dt(hours=24)
             departure_time, waiting_veh = self._next_veh_departure[user_line_id]
@@ -546,8 +552,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
         added = False
         passengers_len = len(veh.passengers)
         if passengers_len < veh.capacity:
-            added = True
-            self.add_passenger(user, drop_node, veh, line["nodes"])
+            added = self.add_passenger(user, drop_node, veh, line["nodes"], dt)
         return added, veh.is_public_transport()
 
     def step_maintenance(self, dt: Dt):
