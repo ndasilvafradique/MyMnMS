@@ -435,8 +435,8 @@ class PublicTransportMobilityService(AbstractMobilityService):
         do_node_ind = line_nodes.index(drop_node)
 
         try:
-            assert pu_node_ind <= do_node_ind, f'Pickup index {pu_node_ind} should necessarily take place '\
-                f'before dropoff index {do_node_ind} on the public transport line for User {user.id}.'
+            assert pu_node_ind <= do_node_ind, f'Pickup index {pu_node_ind} ({pu_node}) should necessarily take place '\
+                f'before dropoff index {do_node_ind} ({drop_node}) on the public transport line for User {user.id}.'
 
             print(f'Adding passenger {user.id}: PICK UP at {pu_node}, DROP OFF at {drop_node}')
 
