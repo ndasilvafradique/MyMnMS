@@ -95,11 +95,11 @@ class User(TimeDependentSubject):
         self._deadend_at_next_node = False
 
         if path is None:
-            print(f'Init user {self.id} none path')
+            #print(f'Init user {self.id} none path')
             self.path: Optional[Path] = None
             self.forced_path_chosen_mobility_services = None
         else:
-            print(f'Init user {self.id} setting path', path)
+            #print(f'Init user {self.id} setting path', path)
             self.set_path(path)
             self.forced_path_chosen_mobility_services = forced_path_chosen_mobility_services
 

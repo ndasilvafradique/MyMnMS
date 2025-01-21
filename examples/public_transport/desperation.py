@@ -123,8 +123,13 @@ if __name__ == '__main__':
     demand = CSVDemandManager(demand_file_name)
     demand.add_user_observer(CSVUserObserver(outdir + "/user.csv"), user_ids="all")
 
+    mmgraph.connect_intra_layer("BUSLayer", 500)
+    mmgraph.connect_intra_layer("TRAMLayer", 500)
+    mmgraph.connect_intra_layer("METROLayer", 500)
+    mmgraph.connect_inter_layers(["BUSLayer", "TRAMLayer", "METROLayer"], 500)
+
     flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
-    flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
+    flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR", "BUS", "TRAM", "METRO"], calculate_V_MFD))
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
     ## BASELINE
