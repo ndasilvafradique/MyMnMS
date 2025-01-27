@@ -157,7 +157,7 @@ if __name__ == '__main__':
     demandes[['ORIGIN', 'DESTINATION']] = demandes.apply(convert_corrdinates, axis=1, result_type='expand')
 
     print(demandes)
-    demandes.drop(columns='NAME').to_csv('INPUTS/new_test_demands.csv', sep=';', index=False)
+    demandes.drop(columns='NAME').to_csv('INPUTS/test_demands.csv', sep=';', index=False)
 
 
 

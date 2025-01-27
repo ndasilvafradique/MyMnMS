@@ -85,16 +85,21 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             -selected_path: path chosen
         """
         print('N PATHS:', len(paths), 'found for user', uid)
+
+        paths_ID = dict(zip(range(len(paths), paths)))
+
         if len(paths) > 1:
+
             cost_score = [p.path_cost for p in paths]
             CI_score = [0 for i in range(len(paths))]
             BI_score = [0 for i in range(len(paths))]
+            line_changes = [0] * len(paths)
 
             for p in range(len(paths)):
                 path_tt = paths[p].get_link_cost(self._mlgraph, self._cost)
                 # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
                 i = 0
-                line_changes = 1
+                line_changes[p] += 1
                 if self.alpha != 0 or self.beta != 0:
                     x = paths[p].nodes[1]
                     # Get line ID. Ex. TRAMT5
@@ -116,38 +121,51 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                 if i != 0:
                                     line_changes = line_changes + 1
                         i += 1
-                    CI_score[p] = self.alpha * CI_score[p] / line_changes
-                    #BI_score[p] = self.beta * BI_score[p] / line_changes
+                    CI_score[p] = self.alpha * CI_score[p]
+                    cost_score[p] = cost_score[p]
+
+            ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score, 'BI': BI_score, 'cost': cost_score, 'line_changes': line_changes})
+
+            # Sort the paths in ascending or descending order based on the criterion's nature. For example:
+            # Congestion Index: Lower is better (ascending order).
+            # Behavior Index (Preference): Higher is better (descending order).
+            # Cost (in Time): Lower is better (ascending order).
+            # Line Changes: Lower is better (ascending order).
+
+            ranked_paths["CongestionRank"] = ranked_paths["CI"].rank(ascending=True)
+            ranked_paths["BehaviorRank"] = ranked_paths["BI"].rank(ascending=False)
+            ranked_paths["CostRank"] = ranked_paths["cost"].rank(ascending=True)
+            ranked_paths["LineChangesRank"] = ranked_paths["line_changes"].rank(ascending=True)
 
             if self.baseline:
-                criteria = {'BI': (BI_score, True), 'C': (cost_score, False)}
+                # Calculate total score
+                ranked_paths["TotalScore"] = (
+                        ranked_paths["BehaviorRank"] +
+                        ranked_paths["CostRank"] +
+                        ranked_paths["LineChangesRank"]
+                )
             else:
-                criteria = {'CI': (CI_score, False), 'BI': (BI_score, True), 'C': (cost_score, False)}
-            # CREATE C RANKS AND SORT PATH. THEN COMBINE THE SCORE BASED ON VALUE AND POSITION WITHIN THE RANKS
-            # AND GET THE TOP K
-            ranked_paths = self.rank_paths(criteria, len(paths)).iloc[:self.top_k, :]
-            random_path = ranked_paths.iloc[np.random.randint(low=0, high=len(ranked_paths)), 0]
-            print('Path', random_path, paths)
-            random_path = paths[random_path]
-            return random_path
+                # Calculate total score
+                ranked_paths["TotalScore"] = (
+                        ranked_paths["CongestionRank"] +
+                        ranked_paths["BehaviorRank"] +
+                        ranked_paths["CostRank"] +
+                        ranked_paths["LineChangesRank"]
+                )
+
+            # Sort by total score
+            ranked_paths = ranked_paths.sort_values(by="TotalScore")
+
+            # Select the top 3 paths
+            top_paths = ranked_paths.nsmallest(self.top_k, "TotalScore")
+
+            # Randomly select one path
+            selected_path = top_paths.sample(n=1)
+            return paths_ID[selected_path['ID'][0]]
         elif len(paths) == 1:
             return paths[0]
         else:
             return None
-
-    def rank_paths(self, criteria, P):
-        rankings = [
-            pd.DataFrame({'ID': list(range(P)), c: criteria[c][0]}).sort_values(by=c,
-                                                                                ascending=criteria[c][1]).reset_index(
-                drop=True)
-            for c in criteria]
-        ranked_paths = pd.DataFrame({'ID': list(range(P)), 'SCORE': [0.0] * P})
-
-        for p in ranked_paths.index:
-            for rank in rankings:
-                path = rank[rank['ID'] == p]
-                ranked_paths.iloc[p, 1] += (path.index[0] + 1)  # POSITION
-        return ranked_paths
 
     def get_CI(self, node):
         return CongestionModel.get_instance(self.congestion_prediction_technique).predict_congestion(node)
