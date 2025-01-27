@@ -86,7 +86,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         """
         print('N PATHS:', len(paths), 'found for user', uid)
 
-        paths_ID = dict(zip(range(len(paths), paths)))
+        paths_ID = dict()
+        for i in range(len(paths)):
+            paths_ID[i] = paths[i]
 
         if len(paths) > 1:
 
