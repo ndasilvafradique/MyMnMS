@@ -123,10 +123,15 @@ if __name__ == '__main__':
     demand = CSVDemandManager(demand_file_name)
     demand.add_user_observer(CSVUserObserver(outdir + "/user.csv"), user_ids="all")
 
-    mmgraph.connect_intra_layer("BUSLayer", 500)
-    mmgraph.connect_intra_layer("TRAMLayer", 500)
-    mmgraph.connect_intra_layer("METROLayer", 500)
-    mmgraph.connect_inter_layers(["BUSLayer", "TRAMLayer", "METROLayer"], 500)
+    # mmgraph.connect_intra_layer("BUSLayer", 500)
+    # mmgraph.connect_intra_layer("TRAMLayer", 500)
+    # mmgraph.connect_intra_layer("METROLayer", 500)
+    # mmgraph.connect_inter_layers(["BUSLayer", "TRAMLayer", "METROLayer"], 500)
+
+    start_time = time.time()
+    load_transit_links(mmgraph, indir + f'/mmgraph_{NX}_{NX}_{500}.json')
+    end_time = time.time()
+    print(f'LOADING MMGRAPH INTER-INTRA LAYER', end_time - start_time, 's')
 
     flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR", "BUS", "TRAM", "METRO"], calculate_V_MFD))
