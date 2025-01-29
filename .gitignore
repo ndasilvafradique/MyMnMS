@@ -168,3 +168,5 @@ examples/snapshot/OUTPUTS copie 2/snapshot.mnms
 examples/snapshot/OUTPUTS/monolink.json
 examples/snapshot/OUTPUTS/snapshot.graph
 examples/snapshot/OUTPUTS/snapshot.mnms
+examples/public_transport/INPUTS/mmgraph_100_100_500.json
+examples/graph_loading/transit_link_100_100_500_grid.json
