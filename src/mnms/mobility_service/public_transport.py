@@ -526,12 +526,12 @@ class PublicTransportMobilityService(AbstractMobilityService):
                     print(f'User {user.id} to {chosen_veh} {chosen_line} but departure time None')
                     departure_time = None
                     break
-                else:
-                    if self._next_veh_departure[user_line_id] is None:
-                        print(f'Next departure for user {user.id} on {user_line_id} is not available')
-                        return Dt(hours=24)
-                    departure_time, waiting_veh = self._next_veh_departure[user_line_id]
-                    chosen_veh = waiting_veh
+            else:
+                if self._next_veh_departure[user_line_id] is None:
+                    print(f'Next departure for user {user.id} on {user_line_id} is not available')
+                    return Dt(hours=24)
+                departure_time, waiting_veh = self._next_veh_departure[user_line_id]
+                chosen_veh = waiting_veh
 
         self._cache_request_vehicles[user.id] = (chosen_veh, chosen_line)
         print(f'Associate user {user.id} to {chosen_veh} {chosen_line}')

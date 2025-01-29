@@ -375,7 +375,7 @@ class Supervisor(object):
 
                 # Call user flow step
                 users_reach_dt_answer = self.call_user_flow_step(flow_dt, users_step)
-                print('DEMAND USER', users_reach_dt_answer)
+                #print('DEMAND USER', users_reach_dt_answer)
                 self._decision_model.add_users_for_planning(users_reach_dt_answer, [Event.MATCH_FAILURE]*len(users_reach_dt_answer))
 
 

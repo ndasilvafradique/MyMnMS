@@ -46,11 +46,12 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               cost=cost,
                                                               outfile=outfile,
                                                               verbose_file=verbose_file,
-                                                              n_shortest_path=n_shortest_path
+                                                              n_shortest_path=n_shortest_path,
+                                                              save_routes_dynamically_and_reapply=True
                                                               )
         # Connect to Redis (adjust host and port)
-        # self.redis_client = redis.StrictRedis(host='http://137.121.170.69',
-        #                                      port=6379, decode_responses=True)
+        self.redis_client = redis.StrictRedis(host='localhost',
+                                             port=6379, decode_responses=True)
 
         self._seed = None
         self._rng = None
@@ -119,9 +120,9 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                 #print(str(tcurrent), sum(path_tt[:i]), t)
                                 line = next_line
                                 CI_score[p] += self.get_CI(x)
-                                #BI_score[p] += self.get_BI(uid, x, t)
+                                BI_score[p] += self.get_BI(uid, x, t)
                                 if i != 0:
-                                    line_changes = line_changes + 1
+                                    line_changes[p] = line_changes[p] + 1
                         i += 1
                     CI_score[p] = self.alpha * CI_score[p]
                     cost_score[p] = cost_score[p]
@@ -163,7 +164,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
             # Randomly select one path
             selected_path = top_paths.sample(n=1)
-            return paths_ID[selected_path['ID'][0]]
+            return paths_ID[selected_path.iloc[0, 0]]
         elif len(paths) == 1:
             return paths[0]
         else:

@@ -139,7 +139,7 @@ if __name__ == '__main__':
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
     ## BASELINE
     travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=1, beta=1, gamma=1,
-                                                     baseline=False, top_k=3, n_shortest_path=10)
+                                                     baseline=False, top_k=3, n_shortest_path=5)
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,

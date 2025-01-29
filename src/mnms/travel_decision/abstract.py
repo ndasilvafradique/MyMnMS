@@ -183,7 +183,6 @@ class AbstractDecisionModel(ABC):
             -users: list of users to add
             -events: corresponding list of events which triggered the need for (re)planning
         """
-        print('Add users for planning', users)
         if users and events:
             assert len(users) == len(events), f'The list of users and events should have the same length.'
             users_already_in_list = list(zip(*self._users_for_planning))
@@ -494,6 +493,8 @@ class AbstractDecisionModel(ABC):
                     u_chosen_mservices[alayer] = ams
                 # Add WALK fake mob service on TRANSIT layer
                 u_chosen_mservices['TRANSIT'] = 'WALK'
+                ## HARDCODED PATCH
+                u_chosen_mservices = {'TRAMLayer': 'TRAM', 'BUSLayer': 'BUS', 'METROLayer': 'METRO', 'TRANSIT': 'WALK'}
                 chosen_mservices.append(u_chosen_mservices)
                 nb_paths.append(k)
 
@@ -712,6 +713,8 @@ class AbstractDecisionModel(ABC):
             -gnodes: the graph nodes
         """
         p.construct_layers_from_links(gnodes)
+        ## SECURITY PATCH
+        chosen_mservice =  {'METROLayer': 'METRO', 'TRAMLayer': 'TRAM', 'BUSLayer': 'BUS', 'TRANSIT': 'WALK'} 
         path_mobservices = [chosen_mservice[layer_id] for layer_id,_ in p.layers]
         p.set_mobility_services(path_mobservices)
         # Second stage path cost computation = take into account waiting time
