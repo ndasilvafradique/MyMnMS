@@ -59,7 +59,7 @@ class LogitDecisionModel(AbstractDecisionModel):
             rng = np.random.default_rng(self._seed)
             self._rng = rng
 
-    def path_choice(self, paths:List[Path], tcurrent=None) -> Path:
+    def path_choice(self, paths:List[Path], uid, tcurrent=None) -> Path:
         """Method that proceeds to the selection of the path.
 
         Args:
