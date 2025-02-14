@@ -155,15 +155,19 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                         ranked_paths["CostRank"] +
                         ranked_paths["LineChangesRank"]
                 )
-
+            
             # Sort by total score
             ranked_paths = ranked_paths.sort_values(by="TotalScore")
+            
+            if not self.baseline:
+                # Select the top 3 paths
+                top_paths = ranked_paths.nsmallest(self.top_k, "TotalScore")
 
-            # Select the top 3 paths
-            top_paths = ranked_paths.nsmallest(self.top_k, "TotalScore")
+                # Randomly select one path
+                selected_path = top_paths.sample(n=1)
+            else:
+                selected_path = ranked_paths
 
-            # Randomly select one path
-            selected_path = top_paths.sample(n=1)
             return paths_ID[selected_path.iloc[0, 0]]
         elif len(paths) == 1:
             return paths[0]
