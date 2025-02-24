@@ -46,10 +46,13 @@ class CongestionModel:
 
         # Apply temporal moving average if technique is specified
         if self.prediction_technique[0] == 'temporal_moving_avg':
-            window = self.prediction_technique[1].get('window', 1)  # Default to window=1 if not provided
+            window = self.prediction_technique[1].get('window', 60)  # Default to window=1 if not provided
             # Compute rolling mean
-            CI['CONGESTION INDEX MA'] = CI['CONGESTION INDEX'].rolling(window=window).mean()
-            return CI['CONGESTION INDEX MA'].iloc[-1]
+            CI_mod = CI.copy()  # Ensure it's a separate dataframe
+            CI_mod.loc[:, 'CONGESTION INDEX MA'] = CI['CONGESTION INDEX'].rolling(window=window).mean()
+            print('Computing congestion')
+            print(CI_mod.head(5))
+            return CI_mod['CONGESTION INDEX MA'].iloc[-1]
 
         # Default return if no technique applies
         return CI['CONGESTION INDEX'].iloc[-1]

@@ -292,7 +292,7 @@ class AbstractDecisionModel(ABC):
                     # Find back the mob service for which there was a match failure
                     failed_mservice = u.get_failed_mobility_service()
                     # Remove this service from user's list of available mob services
-                    u.remove_available_mobility_service(failed_mservice)
+                    # u.remove_available_mobility_service(failed_mservice)
                 else:
                     # No modification of the list of available mobility services
                     # NB: If one defines specific events, the use of mobility_services_graphs is recommended
@@ -494,7 +494,7 @@ class AbstractDecisionModel(ABC):
                 # Add WALK fake mob service on TRANSIT layer
                 u_chosen_mservices['TRANSIT'] = 'WALK'
                 ## HARDCODED PATCH
-                u_chosen_mservices = {'TRAMLayer': 'TRAM', 'BUSLayer': 'BUS', 'METROLayer': 'METRO', 'TRANSIT': 'WALK'}
+                #u_chosen_mservices = {'TRAMLayer': 'TRAM', 'BUSLayer': 'BUS', 'METROLayer': 'METRO', 'TRANSIT': 'WALK'}
                 chosen_mservices.append(u_chosen_mservices)
                 nb_paths.append(k)
 
@@ -714,7 +714,7 @@ class AbstractDecisionModel(ABC):
         """
         p.construct_layers_from_links(gnodes)
         ## SECURITY PATCH
-        chosen_mservice =  {'METROLayer': 'METRO', 'TRAMLayer': 'TRAM', 'BUSLayer': 'BUS', 'TRANSIT': 'WALK'} 
+        #chosen_mservice =  {'METROLayer': 'METRO', 'TRAMLayer': 'TRAM', 'BUSLayer': 'BUS', 'TRANSIT': 'WALK'} 
         path_mobservices = [chosen_mservice[layer_id] for layer_id,_ in p.layers]
         p.set_mobility_services(path_mobservices)
         # Second stage path cost computation = take into account waiting time

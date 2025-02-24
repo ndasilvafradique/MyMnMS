@@ -52,7 +52,6 @@ class VehicleActivity(ABC):
 
     is_done: bool = False
 
-
     def __post_init__(self):
         self.reset_path_iterator()
 
@@ -102,7 +101,7 @@ class VehicleActivity(ABC):
     def execute(self, veh: "Vehicle", tcurrent: Time):
         veh.current_activity_type = self.activity_type
         # Move = self.is_moving
-        self.is_done=True
+        self.is_done = True
         return True
 
     def copy(self):
@@ -127,7 +126,6 @@ class VehicleActivityStop(VehicleActivity):
         self.is_done = True
         veh._is_moving = False
         return True
-
 
     def start(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is started
@@ -201,7 +199,6 @@ class VehicleActivityPickup(VehicleActivity):
         self.is_done = True
         return True
 
-
     def start(self, veh: "Vehicle", tcurrent: Time):
         """Update when the activity is started
 
@@ -235,16 +232,21 @@ class VehicleActivityServing(VehicleActivity):
         veh.current_activity_type = self.activity_type
         # Move = self.is_moving
         self.user.vehicle = None
-        veh.passengers.pop(self.user.id)
-        if veh.is_public_transport():
-            print('Serving', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}')
-
-        self.user.remaining_link_length = 0
-        upath = self.user.path.nodes
-        unode = veh._current_node
-        next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=True) + 1
-        print(f'In serving {self.user.id}, next_node_ind {next_node_ind}, veh position {veh.position}')
-        self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
+        if self.user.id in veh.passengers:
+            veh.passengers.pop(self.user.id)
+            if veh.is_public_transport():
+                print('Serving', veh.type, veh.id, f'{len(veh.passengers)}/{veh.capacity}')
+    
+            self.user.remaining_link_length = 0
+            upath = self.user.path.nodes
+            unode = veh._current_node
+            next_node_ind = self.user.get_node_index_in_path(unode, last_achieved=True) + 1
+            print(f'In serving {self.user.id}, next_node_ind {next_node_ind}, veh position {veh.position}')
+            self.user.set_position((unode, upath[next_node_ind]), unode, 0, veh.position, tcurrent)
+        else:
+            print(f'User not among vehicle passengers! SERVING ANOMALY! {self.user.id} will be set deadend.')
+            self.user.interrupt_path(tcurrent)
+            self.user.set_state_deadend(tcurrent)
 
         # last_achieved = False
         # if veh._current_link is not None:
@@ -300,7 +302,6 @@ class VehicleActivityServing(VehicleActivity):
         veh.passengers.pop(self.user.id)
         if veh.is_public_transport():
             print('Serving done', veh.id, f'{len(veh.passengers)}/{veh.capacity}')
-
 
         self.user.remaining_link_length = 0
         upath = self.user.path.nodes
@@ -415,7 +416,7 @@ class Vehicle(TimeDependentSubject):
         #print(f'Init {self.type} {self.id} at {self._current_node}')
 
         for activity in self._activities[self._current_node]:
-            print('Init executing', activity.activity_type, 'for vehicle',self.type, self.id, activity.activity_type)
+            print('Init executing', activity.activity_type, 'for vehicle', self.type, self.id, activity.activity_type)
             self.execute_activity(activity, None)
 
     def __repr__(self):
@@ -509,7 +510,8 @@ class Vehicle(TimeDependentSubject):
 
     def sort_activities(self, activities):
         def activity_key(activity):
-            return self.activity_order.get(activity.value, float('inf')) if isinstance(activity, ActivityType) else float(
+            return self.activity_order.get(activity.value, float('inf')) if isinstance(activity,
+                                                                                       ActivityType) else float(
                 'inf')
 
         activities.sort(key=activity_key)

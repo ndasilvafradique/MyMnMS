@@ -134,12 +134,15 @@ if __name__ == '__main__':
     print(f'LOADING MMGRAPH INTER-INTRA LAYER', end_time - start_time, 's')
 
     flow_motor = MFDFlowMotor(outfile=outdir + "/flow.csv")
-    flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR", "BUS", "TRAM", "METRO"], calculate_V_MFD))
+    flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
     ## BASELINE
-    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", alpha=1, beta=1, gamma=1,
-                                                     baseline=False, top_k=3, n_shortest_path=5)
+    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", 
+                                                     baseline=True, top_k=3, n_shortest_path=10, 
+                                                     max_diff_cost = 0.90,
+                                                     max_dist_in_common = 0.98,
+                                                     cost_multiplier_to_find_k_paths = 1.1,)
 
     supervisor = Supervisor(graph=mmgraph,
                             flow_motor=flow_motor,

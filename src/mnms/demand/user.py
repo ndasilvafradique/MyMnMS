@@ -318,8 +318,11 @@ class User(TimeDependentSubject):
         print(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
 
     def remove_available_mobility_service(self, ms):
-        self.available_mobility_services.remove(ms)
-        print(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
+        if ms in self.available_mobility_services:
+            self.available_mobility_services.remove(ms)
+            print(f'User {self.id} updated list of available mobility services to {self.available_mobility_services}')
+        else:
+            print(f'No {ms} mobility services to remove for user {self.id}! ANOMALY')
 
     def cancel_match(self, mlgraph, cost):
         """Method that cancels user's current match by removing user's pickup and

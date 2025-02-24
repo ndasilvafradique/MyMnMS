@@ -21,9 +21,13 @@ log = create_logger(__name__)
 
 class BehaviorCongestionDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
-                 verbose_file=False, alpha=1, beta=1, gamma=1,
-                 baseline=False, top_k=3, n_shortest_path=10,
-                 congestion_prediction_technique=None):
+                 verbose_file=False,
+                 baseline=False, top_k=3, n_shortest_path=10, 
+                 congestion_prediction_technique=None,
+                 max_diff_cost: float = 0.25,
+                 max_dist_in_common: float = 0.95,
+                 cost_multiplier_to_find_k_paths: float = 10,
+                ):
         """Behavior- and congestion-driven decision model for the path of a user.
         All routes computed are considered on an equal footing for the choice.
 
@@ -47,7 +51,10 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               outfile=outfile,
                                                               verbose_file=verbose_file,
                                                               n_shortest_path=n_shortest_path,
-                                                              save_routes_dynamically_and_reapply=True
+                                                              save_routes_dynamically_and_reapply=True,
+                                                              max_diff_cost=max_diff_cost,
+                                                              max_dist_in_common=max_dist_in_common,
+                                                              cost_multiplier_to_find_k_paths=cost_multiplier_to_find_k_paths,
                                                               )
         # Connect to Redis (adjust host and port)
         self.redis_client = redis.StrictRedis(host='localhost',
@@ -55,9 +62,6 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
         self._seed = None
         self._rng = None
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
         self.baseline = baseline
         self.top_k = top_k
         assert cost == 'travel_time'
@@ -102,30 +106,28 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                 path_tt = paths[p].get_link_cost(self._mlgraph, self._cost)
                 # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
                 i = 0
-                line_changes[p] += 1
-                if self.alpha != 0 or self.beta != 0:
-                    x = paths[p].nodes[1]
-                    # Get line ID. Ex. TRAMT5
+                x = paths[p].nodes[1]
+                # Get line ID. Ex. TRAMT5
+                if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
+                    line = x.split('_')[0] + x.split('_')[1]
+                else:
+                    line = ''
+                for x in paths[p].nodes[1:-1]:
                     if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
-                        line = x.split('_')[0] + x.split('_')[1]
-                    else:
-                        line = ''
-                    for x in paths[p].nodes[1:-1]:
-                        if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
-                            next_line = x.split('_')[0] + x.split('_')[1]
-                            if line != next_line or i == 0:
-                                t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent),
-                                                                                            '%H:%M:%S.%f')
-                                #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
-                                #print(str(tcurrent), sum(path_tt[:i]), t)
-                                line = next_line
-                                CI_score[p] += self.get_CI(x)
-                                BI_score[p] += self.get_BI(uid, x, t)
-                                if i != 0:
-                                    line_changes[p] = line_changes[p] + 1
-                        i += 1
-                    CI_score[p] = self.alpha * CI_score[p]
-                    cost_score[p] = cost_score[p]
+                        next_line = x.split('_')[0] + x.split('_')[1]
+                        if line != next_line or i == 0:
+                            t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent),
+                                                                                        '%H:%M:%S.%f')
+                            #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
+                            #print(str(tcurrent), sum(path_tt[:i]), t)
+                            line = next_line
+                            CI_score[p] += self.get_CI(x)
+                            BI_score[p] += self.get_BI(uid, x, t)
+                            if i != 0:
+                                line_changes[p] = line_changes[p] + 1
+                    i += 1
+                CI_score[p] = CI_score[p]
+                cost_score[p] = cost_score[p]
 
             ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score, 'BI': BI_score, 'cost': cost_score, 'line_changes': line_changes})
 

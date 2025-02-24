@@ -438,7 +438,7 @@ class PublicTransportMobilityService(AbstractMobilityService):
             assert pu_node_ind <= do_node_ind, f'Pickup index {pu_node_ind} ({pu_node}) should necessarily take place '\
                 f'before dropoff index {do_node_ind} ({drop_node}) on the public transport line for User {user.id}.'
 
-            print(f'Adding passenger {user.id}: PICK UP at {pu_node}, DROP OFF at {drop_node}')
+            print(f'Adding pickup activities for {veh.type} {veh.id} at pickup node {pu_node} ({pu_node_ind}- {do_node_ind}) {[x.activity_type for x in veh._activities[pu_node]]}')
 
             pu_activity = VehicleActivityPickup(node=pu_node, user=user)
             do_activity = VehicleActivityServing(node=drop_node, user=user)

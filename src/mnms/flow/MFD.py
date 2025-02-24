@@ -175,25 +175,29 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
             Returns
         """
         dist_travelled = dt * speed
-        if dist_travelled > veh._remaining_link_length:
+        elapsed_time = 0
+        if dist_travelled >= veh._remaining_link_length:
+            print(f'Vehicle {veh.type} {veh.id} finished travelling on {veh.current_link} {dist_travelled} at {speed},'
+                  f' remaining len {veh._remaining_link_length}')
             dist_travelled = veh._remaining_link_length
             elapsed_time = dist_travelled / speed
             veh.update_distance(dist_travelled)
             veh._remaining_link_length = 0
+            # self.set_vehicle_position(veh)
             # veh.update_achieved_path()
-            self.set_vehicle_position(veh)
             # Se la distanza percorsa è maggiore del link, allora deve spostarsi
             # al nodo successivo e può eseguire le attività di quel nodo
             veh.move()
+            self.set_vehicle_position(veh)
             veh._reached_station = True
             for passenger_id, passenger in veh.passengers.items():
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position,
                                        tcurrent)
-                print(f'Passenger {passenger_id} set position to {passenger.position}')
-            return elapsed_time#, users_to_replan
+                print(f'Passenger {passenger_id} set position to {passenger.position} because on vehicle {veh.type} {veh.id}')
+            #return elapsed_time #, users_to_replan
         else:
-            #print(f'Still travelling {veh.type} {veh.id} on {veh.current_link} {dist_travelled} < {veh.remaining_link_length}')
             veh._reached_station = False
+            print(f'Still travelling {veh.type} {veh.id} on {veh.current_link} {dist_travelled} < {veh.remaining_link_length} {veh._reached_station}')
             veh._remaining_link_length -= dist_travelled
             veh.update_distance(dist_travelled)
             self.set_vehicle_position(veh)
@@ -201,7 +205,11 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 passenger.set_position(veh._current_link, veh._current_node, veh.remaining_link_length, veh.position,
                                        tcurrent)
             #return dt
-            return 0
+
+        print(f'Vehicle {veh.type} {veh.id} at {tcurrent} MOVING ON {veh.current_link}, last position {veh._current_node},'
+              f' remaining len {veh._remaining_link_length} reached station {veh._reached_station}')
+
+        return elapsed_time
 
     def get_vehicle_zone(self, veh):
         try:
@@ -252,17 +260,19 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
         users_to_replan = set()
 
         for veh_id, veh in self.veh_manager._vehicles.items():
-            #print(f'REACHED A STATION {veh.type} {veh.id} {veh.current_node} - IS MOVING {veh.is_moving}')
-            if veh._reached_station:
+            if veh._reached_station is True:
+                print(f'REACHED A STATION {veh.type} {veh.id} {veh.current_node} - IS MOVING {veh.is_moving}')
                 activities = veh._activities[veh._current_node]
                 for activity in activities:
                     #print(f'I want to execute a {activity.activity_type} on {veh.type} {veh.id} for {activity.user}')
-                    if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
-                        veh.execute_activity(activity, self._tcurrent)
-                    else:
-                        #print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
-                        users_to_replan.add(activity.user)
-                        veh.remove_activities_of([activity.user])
+                    # THIS CONTROL PREHEVENTS FROM NOT UNIQUE NAME RELATED STOPS
+                    if not activity.is_done:
+                        if len(veh.passengers) < veh.capacity or activity.activity_type != ActivityType.PICKUP:
+                            veh.execute_activity(activity, self._tcurrent)
+                        else:
+                            #print(f'STEP {veh._current_node} removing activities of', {activity.activity_type}, {activity.user})
+                            users_to_replan.add(activity.user)
+                            veh.remove_activities_of([activity.user])
             if veh.is_moving:
                 #print(f'{veh.type} {veh.id} is moving:', veh.is_moving)
                 self.count_moving_vehicle(veh, current_vehicles)
@@ -295,7 +305,7 @@ class MFDFlowMotor(AbstractMFDFlowMotor):
                 veh.distance_at_last_res_change = veh.distance
             veh_dt -= elapsed_time
             #new_time = self._tcurrent.add_time(dt)
-            print(f'VEHICLE {veh.type} {veh_id} add {veh_dt} seconds to {self._tcurrent}')
+            # print(f'VEHICLE {veh.type} {veh_id} add {veh_dt} seconds to {self._tcurrent}')
             new_time = self._tcurrent.add_time(Dt(seconds=veh_dt))
             veh.notify(new_time)
             veh.notify_passengers(new_time)
