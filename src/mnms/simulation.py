@@ -401,12 +401,11 @@ class Supervisor(object):
                 flow_step += 1
 
                 for vehicle_id in VehicleManager._vehicles:
-                    passengers = len(VehicleManager._vehicles[vehicle_id].passengers)
-                    capacity = VehicleManager._vehicles[vehicle_id].capacity
-                    CI = passengers/capacity
-                    node = VehicleManager._vehicles[vehicle_id].current_node
-                    if (VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.REPOSITIONING and
-                            VehicleManager._vehicles[vehicle_id].activity_type != ActivityType.STOP):
+                    if VehicleManager._vehicles[vehicle_id].is_moving:
+                        passengers = len(VehicleManager._vehicles[vehicle_id].passengers)
+                        capacity = VehicleManager._vehicles[vehicle_id].capacity
+                        CI = passengers/capacity
+                        node = VehicleManager._vehicles[vehicle_id].current_node
                         cm.update_congestion_model({
                                                 'TIMESTAMP': [str(self.tcurrent)],
                                                 'VEHICLE ID': [vehicle_id],
@@ -415,9 +414,10 @@ class Supervisor(object):
                                                 'CONGESTION INDEX': [CI],
                                                 'NODE': [node]
                                                 })
-                        #cm.write_congestion('BASELINE')
                         # ##Write here only because simulation crashes##
                         f.write(f'{str(self.tcurrent)},{vehicle_id},{passengers},{capacity},{CI},{node}\n')
+                    else:
+                        print('DO NOT RECORD NOT MOVING VEHICLE', vehicle_id)
 
             ## Call the update graph
             self.call_update_graph(update_graph_threshold)
