@@ -138,8 +138,10 @@ if __name__ == '__main__':
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
     ## BASELINE
+    baseline = True
+    print(f'SIMULATION TYPE:', 'BASELINE' if baseline else 'TEST')
     travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", 
-                                                     baseline=True, top_k=3, n_shortest_path=10, 
+                                                     baseline=baseline, top_k=5, n_shortest_path=10, 
                                                      max_diff_cost = 0.90,
                                                      max_dist_in_common = 0.98,
                                                      cost_multiplier_to_find_k_paths = 1.1,)
