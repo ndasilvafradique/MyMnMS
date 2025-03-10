@@ -21,7 +21,7 @@ class CongestionModel:
             self.data = pd.DataFrame(columns=['TIMESTAMP', 'VEHICLE ID', 'PASSENGERS', 'CAPACITY', 'CONGESTION INDEX', 'NODE'])
 
     @staticmethod
-    def get_instance(prediction_technique=('temporal_moving_avg', {'window':60})):
+    def get_instance(prediction_technique=('temporal_moving_avg', {'window':20})):
         """
         Static method to get the singleton instance.
         Creates the instance if it doesn't exist.
@@ -46,7 +46,7 @@ class CongestionModel:
 
         # Apply temporal moving average if technique is specified
         if self.prediction_technique[0] == 'temporal_moving_avg':
-            window = self.prediction_technique[1].get('window', 60)  # Default to window=1 if not provided
+            window = self.prediction_technique[1].get('window', 20)  # Default to window=1 if not provided
             # Compute rolling mean
             CI_mod = CI.copy()  # Ensure it's a separate dataframe
             CI_mod.loc[:, 'CONGESTION INDEX MA'] = CI['CONGESTION INDEX'].rolling(window=window).mean()

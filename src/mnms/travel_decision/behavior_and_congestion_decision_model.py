@@ -15,19 +15,21 @@ import redis
 from datetime import datetime, timedelta
 import time
 import re
+import hashlib
+
 
 log = create_logger(__name__)
 
 
 class BehaviorCongestionDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
-                 verbose_file=False,
-                 baseline=False, top_k=3, n_shortest_path=10, 
+                 verbose_file=False, alpha=1, beta=1, gamma=1,
+                 baseline=False, top_k=3, n_shortest_path=10,
                  congestion_prediction_technique=None,
                  max_diff_cost: float = 0.25,
                  max_dist_in_common: float = 0.95,
                  cost_multiplier_to_find_k_paths: float = 10,
-                ):
+                 ):
         """Behavior- and congestion-driven decision model for the path of a user.
         All routes computed are considered on an equal footing for the choice.
 
@@ -57,17 +59,20 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                                               cost_multiplier_to_find_k_paths=cost_multiplier_to_find_k_paths,
                                                               )
         # Connect to Redis (adjust host and port)
-        self.redis_client = redis.StrictRedis(host='localhost',
-                                             port=6379, decode_responses=True)
-
+        self.redis_client = redis.StrictRedis(host='localhost', port=6379, decode_responses=True)
         self._seed = None
         self._rng = None
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
         self.baseline = baseline
         self.top_k = top_k
         assert cost == 'travel_time'
         self.congestion_prediction_technique = congestion_prediction_technique
-        #self.CI_data = pd.read_csv(congestion_file_path)
-        #self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
+        self.baseline = baseline
+
+        # self.CI_data = pd.read_csv(congestion_file_path)
+        # self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
 
     def set_random_seed(self, seed):
         """Method that sets the random seed for this decision model.
@@ -90,13 +95,14 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             -selected_path: path chosen
         """
         print('N PATHS:', len(paths), 'found for user', uid)
-
         paths_ID = dict()
         for i in range(len(paths)):
-            paths_ID[i] = paths[i]
+            p_hash = self.get_path_hash(paths[i])
+            paths_ID[p_hash] = paths[i]
+
+        the_chosen_one = None
 
         if len(paths) > 1:
-
             cost_score = [p.path_cost for p in paths]
             CI_score = [0 for i in range(len(paths))]
             BI_score = [0 for i in range(len(paths))]
@@ -104,32 +110,37 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
             for p in range(len(paths)):
                 path_tt = paths[p].get_link_cost(self._mlgraph, self._cost)
+                services = paths[p].mobility_services
+                services = [item for item in services if item != 'WALK']
+                print('PATH MOB SERVICES', services)
+                line_changes[p] = len(services) - 1
+                print('PATH COST ANALYSIS: ', sum(path_tt), paths[p].get_link_cost(self._mlgraph, self._cost))
                 # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
                 i = 0
                 x = paths[p].nodes[1]
-                # Get line ID. Ex. TRAMT5
                 if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
                     line = x.split('_')[0] + x.split('_')[1]
                 else:
                     line = ''
                 for x in paths[p].nodes[1:-1]:
                     if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
-                        next_line = x.split('_')[0] + x.split('_')[1]
+                        next_line = x.split('_')[0] #+ x.split('_')[1]
                         if line != next_line or i == 0:
-                            t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent),
-                                                                                        '%H:%M:%S.%f')
-                            #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
-                            #print(str(tcurrent), sum(path_tt[:i]), t)
                             line = next_line
-                            CI_score[p] += self.get_CI(x)
-                            BI_score[p] += self.get_BI(uid, x, t)
-                            if i != 0:
-                                line_changes[p] = line_changes[p] + 1
+                            # This control is useful when an user crosses a station without taking
+                            # the related mobility services
+                            if len(services) and next_line == services[0]:
+                                    services = services[1:]
+                                    t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent),'%H:%M:%S.%f')
+                                    t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
+                                    print('TIME DEBUG: ', str(tcurrent), sum(path_tt[:i]), t)
+                                    CI_score[p] += self.get_CI(t, x, line)
+                                    BI_score[p] += self.get_BI(uid, x, t)
                     i += 1
-                CI_score[p] = CI_score[p]
-                cost_score[p] = cost_score[p]
+                print('')
 
-            ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score, 'BI': BI_score, 'cost': cost_score, 'line_changes': line_changes})
+            ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score, 'BI': BI_score, 'cost': cost_score,
+                                         'line_changes': line_changes})
 
             # Sort the paths in ascending or descending order based on the criterion's nature. For example:
             # Congestion Index: Lower is better (ascending order).
@@ -144,37 +155,60 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
 
             if self.baseline:
                 # Calculate total score
-                ranked_paths["TotalScore"] = (
+                ranked_paths["TotalRank"] = (
                         ranked_paths["BehaviorRank"] +
                         ranked_paths["CostRank"] +
                         ranked_paths["LineChangesRank"]
                 )
+
+                ranked_paths.drop(columns=['CongestionRank', 'CI'], inplace=True)
+                ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
             else:
-                # Calculate total score
-                ranked_paths["TotalScore"] = (
+                # Select the best k path based on behavior rank
+                ranked_paths = ranked_paths.nsmallest(self.top_k, "BehaviorRank")
+
+                # Calculate total score on the other criteria
+                ranked_paths["TotalRank"] = (
                         ranked_paths["CongestionRank"] +
                         ranked_paths["BehaviorRank"] +
                         ranked_paths["CostRank"] +
-                        ranked_paths["LineChangesRank"]
+                        ranked_paths["LineChangesRank"] #+
                 )
-            
-            # Sort by total score
-            ranked_paths = ranked_paths.sort_values(by="TotalScore")
-            
-            if not self.baseline:
-                # Select the top 3 paths
-                top_paths = ranked_paths.nsmallest(self.top_k, "TotalScore")
 
-                # Randomly select one path
-                selected_path = top_paths.sample(n=1)
-            else:
-                selected_path = ranked_paths
+                # Sort by total score
+                ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
 
-            return paths_ID[selected_path.iloc[0, 0]]
+            # ranked_to_print = ranked_paths.copy(deep=True)
+            # ranked_to_print['USER'] = [uid] * len(ranked_paths)
+            # ranked_to_print['DEPARTURE'] = [tcurrent] * len(ranked_paths)
+            # ranked_to_print['SERVICES'] = [paths_ID[p].mobility_services for p in ranked_to_print['ID']]
+            # ranked_to_print['NODES'] = [paths_ID[p].nodes for p in ranked_to_print['ID']]
+
+            for key, value in paths_ID.items():
+                print(key, value.nodes)
+
+            # if 'U' in uid:
+            #     ranked_to_print.to_csv(f'OUTPUTS/rank_{uid}_{str(tcurrent).replace(":", "_")}.csv', index=False)
+
+            the_chosen_one = paths_ID[ranked_paths.iloc[0, 0]]
+
+            print(f'User {uid} will chose path: ', ranked_paths.iloc[0, 0])
+            print('Departure at: ', tcurrent)
+            print('*'*100)
+
         elif len(paths) == 1:
-            return paths[0]
-        else:
-            return None
+            p_hash = self.get_path_hash(paths[0])
+            the_chosen_one =  paths[0]
+
+        return the_chosen_one
+
+    def get_path_hash(self, path):
+        stations = path.nodes[1:-1]
+        path_string = " ".join(stations)  # Create a comma-separated string
+        encoded_string = path_string.encode('utf-8')  # Encode to bytes
+        hash_object = hashlib.sha256(encoded_string)
+        hex_hash = hash_object.hexdigest()
+        return hex_hash
 
     def get_CI(self, node):
         return CongestionModel.get_instance(self.congestion_prediction_technique).predict_congestion(node)

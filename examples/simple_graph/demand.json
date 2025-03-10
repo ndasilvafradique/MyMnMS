@@ -1,0 +1,402 @@
+[
+    {
+        "user_id": 1,
+        "departures": 30
+    },
+    {
+        "user_id": 2,
+        "departures": 19
+    },
+    {
+        "user_id": 3,
+        "departures": 21
+    },
+    {
+        "user_id": 4,
+        "departures": 19
+    },
+    {
+        "user_id": 5,
+        "departures": 21
+    },
+    {
+        "user_id": 6,
+        "departures": 25
+    },
+    {
+        "user_id": 7,
+        "departures": 13
+    },
+    {
+        "user_id": 8,
+        "departures": 26
+    },
+    {
+        "user_id": 9,
+        "departures": 21
+    },
+    {
+        "user_id": 10,
+        "departures": 15
+    },
+    {
+        "user_id": 11,
+        "departures": 16
+    },
+    {
+        "user_id": 12,
+        "departures": 16
+    },
+    {
+        "user_id": 13,
+        "departures": 19
+    },
+    {
+        "user_id": 14,
+        "departures": 26
+    },
+    {
+        "user_id": 15,
+        "departures": 20
+    },
+    {
+        "user_id": 16,
+        "departures": 22
+    },
+    {
+        "user_id": 17,
+        "departures": 27
+    },
+    {
+        "user_id": 18,
+        "departures": 16
+    },
+    {
+        "user_id": 19,
+        "departures": 26
+    },
+    {
+        "user_id": 20,
+        "departures": 13
+    },
+    {
+        "user_id": 21,
+        "departures": 23
+    },
+    {
+        "user_id": 22,
+        "departures": 27
+    },
+    {
+        "user_id": 23,
+        "departures": 14
+    },
+    {
+        "user_id": 24,
+        "departures": 23
+    },
+    {
+        "user_id": 25,
+        "departures": 20
+    },
+    {
+        "user_id": 26,
+        "departures": 21
+    },
+    {
+        "user_id": 27,
+        "departures": 27
+    },
+    {
+        "user_id": 28,
+        "departures": 17
+    },
+    {
+        "user_id": 29,
+        "departures": 19
+    },
+    {
+        "user_id": 30,
+        "departures": 21
+    },
+    {
+        "user_id": 31,
+        "departures": 17
+    },
+    {
+        "user_id": 32,
+        "departures": 22
+    },
+    {
+        "user_id": 33,
+        "departures": 22
+    },
+    {
+        "user_id": 34,
+        "departures": 21
+    },
+    {
+        "user_id": 35,
+        "departures": 20
+    },
+    {
+        "user_id": 36,
+        "departures": 19
+    },
+    {
+        "user_id": 37,
+        "departures": 16
+    },
+    {
+        "user_id": 38,
+        "departures": 19
+    },
+    {
+        "user_id": 39,
+        "departures": 19
+    },
+    {
+        "user_id": 40,
+        "departures": 27
+    },
+    {
+        "user_id": 41,
+        "departures": 22
+    },
+    {
+        "user_id": 42,
+        "departures": 20
+    },
+    {
+        "user_id": 43,
+        "departures": 21
+    },
+    {
+        "user_id": 44,
+        "departures": 30
+    },
+    {
+        "user_id": 45,
+        "departures": 23
+    },
+    {
+        "user_id": 46,
+        "departures": 16
+    },
+    {
+        "user_id": 47,
+        "departures": 24
+    },
+    {
+        "user_id": 48,
+        "departures": 30
+    },
+    {
+        "user_id": 49,
+        "departures": 23
+    },
+    {
+        "user_id": 50,
+        "departures": 19
+    },
+    {
+        "user_id": 51,
+        "departures": 18
+    },
+    {
+        "user_id": 52,
+        "departures": 19
+    },
+    {
+        "user_id": 53,
+        "departures": 28
+    },
+    {
+        "user_id": 54,
+        "departures": 23
+    },
+    {
+        "user_id": 55,
+        "departures": 18
+    },
+    {
+        "user_id": 56,
+        "departures": 23
+    },
+    {
+        "user_id": 57,
+        "departures": 28
+    },
+    {
+        "user_id": 58,
+        "departures": 22
+    },
+    {
+        "user_id": 59,
+        "departures": 17
+    },
+    {
+        "user_id": 60,
+        "departures": 15
+    },
+    {
+        "user_id": 61,
+        "departures": 16
+    },
+    {
+        "user_id": 62,
+        "departures": 18
+    },
+    {
+        "user_id": 63,
+        "departures": 12
+    },
+    {
+        "user_id": 64,
+        "departures": 14
+    },
+    {
+        "user_id": 65,
+        "departures": 25
+    },
+    {
+        "user_id": 66,
+        "departures": 18
+    },
+    {
+        "user_id": 67,
+        "departures": 17
+    },
+    {
+        "user_id": 68,
+        "departures": 20
+    },
+    {
+        "user_id": 69,
+        "departures": 16
+    },
+    {
+        "user_id": 70,
+        "departures": 24
+    },
+    {
+        "user_id": 71,
+        "departures": 23
+    },
+    {
+        "user_id": 72,
+        "departures": 31
+    },
+    {
+        "user_id": 73,
+        "departures": 19
+    },
+    {
+        "user_id": 74,
+        "departures": 20
+    },
+    {
+        "user_id": 75,
+        "departures": 13
+    },
+    {
+        "user_id": 76,
+        "departures": 14
+    },
+    {
+        "user_id": 77,
+        "departures": 18
+    },
+    {
+        "user_id": 78,
+        "departures": 24
+    },
+    {
+        "user_id": 79,
+        "departures": 19
+    },
+    {
+        "user_id": 80,
+        "departures": 14
+    },
+    {
+        "user_id": 81,
+        "departures": 15
+    },
+    {
+        "user_id": 82,
+        "departures": 21
+    },
+    {
+        "user_id": 83,
+        "departures": 14
+    },
+    {
+        "user_id": 84,
+        "departures": 20
+    },
+    {
+        "user_id": 85,
+        "departures": 19
+    },
+    {
+        "user_id": 86,
+        "departures": 24
+    },
+    {
+        "user_id": 87,
+        "departures": 11
+    },
+    {
+        "user_id": 88,
+        "departures": 23
+    },
+    {
+        "user_id": 89,
+        "departures": 18
+    },
+    {
+        "user_id": 90,
+        "departures": 26
+    },
+    {
+        "user_id": 91,
+        "departures": 16
+    },
+    {
+        "user_id": 92,
+        "departures": 18
+    },
+    {
+        "user_id": 93,
+        "departures": 23
+    },
+    {
+        "user_id": 94,
+        "departures": 15
+    },
+    {
+        "user_id": 95,
+        "departures": 17
+    },
+    {
+        "user_id": 96,
+        "departures": 26
+    },
+    {
+        "user_id": 97,
+        "departures": 22
+    },
+    {
+        "user_id": 98,
+        "departures": 21
+    },
+    {
+        "user_id": 99,
+        "departures": 23
+    },
+    {
+        "user_id": 100,
+        "departures": 21
+    }
+]

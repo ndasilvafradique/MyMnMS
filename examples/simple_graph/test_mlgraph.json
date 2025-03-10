@@ -1,0 +1,1119 @@
+{
+  "ROADS": {
+    "NODES": {
+      "0": {
+        "id": "0",
+        "position": [
+          0.0,
+          50.0
+        ]
+      },
+      "1": {
+        "id": "1",
+        "position": [
+          3000.0,
+          50.0
+        ]
+      }
+    },
+    "STOPS": {
+      "SO": {
+        "id": "SO",
+        "section": "0_1",
+        "relative_position": 0.1,
+        "absolute_position": [
+          300.0,
+          0.0
+        ]
+      },
+      "S1": {
+        "id": "S1",
+        "section": "0_1",
+        "relative_position": 0.3,
+        "absolute_position": [
+          900.0,
+          0.0
+        ]
+      },
+      "S2": {
+        "id": "S2",
+        "section": "0_1",
+        "relative_position": 0.5,
+        "absolute_position": [
+          1500.0,
+          0.0
+        ]
+      },
+      "S3": {
+        "id": "S3",
+        "section": "0_1",
+        "relative_position": 0.7,
+        "absolute_position": [
+          2100.0,
+          50.0
+        ]
+      },
+      "S4": {
+        "id": "S4",
+        "section": "0_1",
+        "relative_position": 0.9,
+        "absolute_position": [
+          2700.0,
+          0.0
+        ]
+      },
+      "S5": {
+        "id": "S5",
+        "section": "0_1",
+        "relative_position": 0.1,
+        "absolute_position": [
+          300.0,
+          50.0
+        ]
+      },
+      "S6": {
+        "id": "S6",
+        "section": "0_1",
+        "relative_position": 0.4,
+        "absolute_position": [
+          1200.0,
+          50.0
+        ]
+      },
+      "S7": {
+        "id": "S7",
+        "section": "0_1",
+        "relative_position": 0.9,
+        "absolute_position": [
+          2700.0,
+          50.0
+        ]
+      }
+    },
+    "SECTIONS": {
+      "0_1": {
+        "id": "0_1",
+        "upstream": "0",
+        "downstream": "1",
+        "length": 3000.0,
+        "zone": "RES"
+      },
+      "1_0": {
+        "id": "1_0",
+        "upstream": "1",
+        "downstream": "0",
+        "length": 3000.0,
+        "zone": "RES"
+      }
+    },
+    "ZONES": {
+      "RES": {
+        "id": "RES",
+        "sections": [
+          "0_1"
+        ],
+        "contour": []
+      }
+    }
+  },
+  "LAYERS": [
+    {
+      "ID": "BUS",
+      "TYPE": "mnms.graph.layers.PublicTransportLayer",
+      "VEH_TYPE": "mnms.vehicles.veh_type.Bus",
+      "DEFAULT_SPEED": 8.5,
+      "SERVICES": [
+        {
+          "TYPE": "mnms.mobility_service.public_transport.PublicTransportMobilityService",
+          "ID": "BUS"
+        }
+      ],
+      "LINES": [
+        {
+          "ID": "BUS",
+          "STOPS": [
+            "SO",
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "SECTIONS": [
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ]
+          ],
+          "TIMETABLE": [
+            "00:00:00.00",
+            "00:15:00.00",
+            "00:30:00.00",
+            "00:45:00.00",
+            "01:00:00.00",
+            "01:15:00.00",
+            "01:30:00.00",
+            "01:45:00.00",
+            "02:00:00.00",
+            "02:15:00.00",
+            "02:30:00.00",
+            "02:45:00.00",
+            "03:00:00.00",
+            "03:15:00.00",
+            "03:30:00.00",
+            "03:45:00.00",
+            "04:00:00.00",
+            "04:15:00.00",
+            "04:30:00.00",
+            "04:45:00.00",
+            "05:00:00.00",
+            "05:15:00.00",
+            "05:30:00.00",
+            "05:45:00.00",
+            "06:00:00.00",
+            "06:15:00.00",
+            "06:30:00.00",
+            "06:45:00.00",
+            "07:00:00.00"
+          ],
+          "BIDIRECTIONAL": false
+        },
+        {
+          "ID": "BUS_1",
+          "STOPS": [
+            "S5",
+            "S6",
+            "S3",
+            "S7"
+          ],
+          "SECTIONS": [
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ]
+          ],
+          "TIMETABLE": [
+            "00:00:00.00",
+            "00:15:00.00",
+            "00:30:00.00",
+            "00:45:00.00",
+            "01:00:00.00",
+            "01:15:00.00",
+            "01:30:00.00",
+            "01:45:00.00",
+            "02:00:00.00",
+            "02:15:00.00",
+            "02:30:00.00",
+            "02:45:00.00",
+            "03:00:00.00",
+            "03:15:00.00",
+            "03:30:00.00",
+            "03:45:00.00",
+            "04:00:00.00",
+            "04:15:00.00",
+            "04:30:00.00",
+            "04:45:00.00",
+            "05:00:00.00",
+            "05:15:00.00",
+            "05:30:00.00",
+            "05:45:00.00",
+            "06:00:00.00",
+            "06:15:00.00",
+            "06:30:00.00",
+            "06:45:00.00",
+            "07:00:00.00"
+          ],
+          "BIDIRECTIONAL": false
+        }
+      ]
+    },
+    {
+      "ID": "METRO",
+      "TYPE": "mnms.graph.layers.PublicTransportLayer",
+      "VEH_TYPE": "mnms.vehicles.veh_type.Metro",
+      "DEFAULT_SPEED": 11,
+      "SERVICES": [
+        {
+          "TYPE": "mnms.mobility_service.public_transport.PublicTransportMobilityService",
+          "ID": "METRO"
+        }
+      ],
+      "LINES": [
+        {
+          "ID": "METRO",
+          "STOPS": [
+            "SO",
+            "S2",
+            "S4"
+          ],
+          "SECTIONS": [
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ]
+          ],
+          "TIMETABLE": [
+            "00:00:00.00",
+            "00:05:00.00",
+            "00:10:00.00",
+            "00:15:00.00",
+            "00:20:00.00",
+            "00:25:00.00",
+            "00:30:00.00",
+            "00:35:00.00",
+            "00:40:00.00",
+            "00:45:00.00",
+            "00:50:00.00",
+            "00:55:00.00",
+            "01:00:00.00",
+            "01:05:00.00",
+            "01:10:00.00",
+            "01:15:00.00",
+            "01:20:00.00",
+            "01:25:00.00",
+            "01:30:00.00",
+            "01:35:00.00",
+            "01:40:00.00",
+            "01:45:00.00",
+            "01:50:00.00",
+            "01:55:00.00",
+            "02:00:00.00",
+            "02:05:00.00",
+            "02:10:00.00",
+            "02:15:00.00",
+            "02:20:00.00",
+            "02:25:00.00",
+            "02:30:00.00",
+            "02:35:00.00",
+            "02:40:00.00",
+            "02:45:00.00",
+            "02:50:00.00",
+            "02:55:00.00",
+            "03:00:00.00",
+            "03:05:00.00",
+            "03:10:00.00",
+            "03:15:00.00",
+            "03:20:00.00",
+            "03:25:00.00",
+            "03:30:00.00",
+            "03:35:00.00",
+            "03:40:00.00",
+            "03:45:00.00",
+            "03:50:00.00",
+            "03:55:00.00",
+            "04:00:00.00",
+            "04:05:00.00",
+            "04:10:00.00",
+            "04:15:00.00",
+            "04:20:00.00",
+            "04:25:00.00",
+            "04:30:00.00",
+            "04:35:00.00",
+            "04:40:00.00",
+            "04:45:00.00",
+            "04:50:00.00",
+            "04:55:00.00",
+            "05:00:00.00",
+            "05:05:00.00",
+            "05:10:00.00",
+            "05:15:00.00",
+            "05:20:00.00",
+            "05:25:00.00",
+            "05:30:00.00",
+            "05:35:00.00",
+            "05:40:00.00",
+            "05:45:00.00",
+            "05:50:00.00",
+            "05:55:00.00",
+            "06:00:00.00",
+            "06:05:00.00",
+            "06:10:00.00",
+            "06:15:00.00",
+            "06:20:00.00",
+            "06:25:00.00",
+            "06:30:00.00",
+            "06:35:00.00",
+            "06:40:00.00",
+            "06:45:00.00",
+            "06:50:00.00",
+            "06:55:00.00",
+            "07:00:00.00"
+          ],
+          "BIDIRECTIONAL": false
+        }
+      ]
+    },
+    {
+      "ID": "TRAM",
+      "TYPE": "mnms.graph.layers.PublicTransportLayer",
+      "VEH_TYPE": "mnms.vehicles.veh_type.Tram",
+      "DEFAULT_SPEED": 8.5,
+      "SERVICES": [
+        {
+          "TYPE": "mnms.mobility_service.public_transport.PublicTransportMobilityService",
+          "ID": "TRAM"
+        }
+      ],
+      "LINES": [
+        {
+          "ID": "TRAM",
+          "STOPS": [
+            "SO",
+            "S1",
+            "S2",
+            "S3",
+            "S4"
+          ],
+          "SECTIONS": [
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ],
+            [
+              "0_1"
+            ]
+          ],
+          "TIMETABLE": [
+            "00:00:00.00",
+            "00:10:00.00",
+            "00:20:00.00",
+            "00:30:00.00",
+            "00:40:00.00",
+            "00:50:00.00",
+            "01:00:00.00",
+            "01:10:00.00",
+            "01:20:00.00",
+            "01:30:00.00",
+            "01:40:00.00",
+            "01:50:00.00",
+            "02:00:00.00",
+            "02:10:00.00",
+            "02:20:00.00",
+            "02:30:00.00",
+            "02:40:00.00",
+            "02:50:00.00",
+            "03:00:00.00",
+            "03:10:00.00",
+            "03:20:00.00",
+            "03:30:00.00",
+            "03:40:00.00",
+            "03:50:00.00",
+            "04:00:00.00",
+            "04:10:00.00",
+            "04:20:00.00",
+            "04:30:00.00",
+            "04:40:00.00",
+            "04:50:00.00",
+            "05:00:00.00",
+            "05:10:00.00",
+            "05:20:00.00",
+            "05:30:00.00",
+            "05:40:00.00",
+            "05:50:00.00",
+            "06:00:00.00",
+            "06:10:00.00",
+            "06:20:00.00",
+            "06:30:00.00",
+            "06:40:00.00",
+            "06:50:00.00",
+            "07:00:00.00"
+          ],
+          "BIDIRECTIONAL": false
+        }
+      ]
+    }
+  ],
+  "TRANSIT": [
+    {
+      "ID": "BUS_1_S7_METRO_S4",
+      "UPSTREAM": "BUS_1_S7",
+      "DOWNSTREAM": "METRO_S4",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S6_METRO_S2",
+      "UPSTREAM": "BUS_1_S6",
+      "DOWNSTREAM": "METRO_S2",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S5_METRO_SO",
+      "UPSTREAM": "BUS_1_S5",
+      "DOWNSTREAM": "METRO_SO",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S4_METRO_S4",
+      "UPSTREAM": "BUS_S4",
+      "DOWNSTREAM": "METRO_S4",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S2_METRO_S2",
+      "UPSTREAM": "BUS_S2",
+      "DOWNSTREAM": "METRO_S2",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_SO_METRO_SO",
+      "UPSTREAM": "BUS_SO",
+      "DOWNSTREAM": "METRO_SO",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S7_TRAM_S4",
+      "UPSTREAM": "BUS_1_S7",
+      "DOWNSTREAM": "TRAM_S4",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S6_TRAM_S2",
+      "UPSTREAM": "BUS_1_S6",
+      "DOWNSTREAM": "TRAM_S2",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S6_TRAM_S1",
+      "UPSTREAM": "BUS_1_S6",
+      "DOWNSTREAM": "TRAM_S1",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S3_TRAM_S3",
+      "UPSTREAM": "BUS_1_S3",
+      "DOWNSTREAM": "TRAM_S3",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S5_TRAM_SO",
+      "UPSTREAM": "BUS_1_S5",
+      "DOWNSTREAM": "TRAM_SO",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S4_TRAM_S4",
+      "UPSTREAM": "BUS_S4",
+      "DOWNSTREAM": "TRAM_S4",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S3_TRAM_S3",
+      "UPSTREAM": "BUS_S3",
+      "DOWNSTREAM": "TRAM_S3",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S2_TRAM_S2",
+      "UPSTREAM": "BUS_S2",
+      "DOWNSTREAM": "TRAM_S2",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S1_TRAM_S1",
+      "UPSTREAM": "BUS_S1",
+      "DOWNSTREAM": "TRAM_S1",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_SO_TRAM_SO",
+      "UPSTREAM": "BUS_SO",
+      "DOWNSTREAM": "TRAM_SO",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S7_BUS_S4",
+      "UPSTREAM": "BUS_1_S7",
+      "DOWNSTREAM": "BUS_S4",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S6_BUS_S2",
+      "UPSTREAM": "BUS_1_S6",
+      "DOWNSTREAM": "BUS_S2",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S6_BUS_S1",
+      "UPSTREAM": "BUS_1_S6",
+      "DOWNSTREAM": "BUS_S1",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S3_BUS_S3",
+      "UPSTREAM": "BUS_1_S3",
+      "DOWNSTREAM": "BUS_S3",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_1_S5_BUS_SO",
+      "UPSTREAM": "BUS_1_S5",
+      "DOWNSTREAM": "BUS_SO",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S4_BUS_1_S7",
+      "UPSTREAM": "BUS_S4",
+      "DOWNSTREAM": "BUS_1_S7",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S3_BUS_1_S3",
+      "UPSTREAM": "BUS_S3",
+      "DOWNSTREAM": "BUS_1_S3",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S2_BUS_1_S6",
+      "UPSTREAM": "BUS_S2",
+      "DOWNSTREAM": "BUS_1_S6",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_S1_BUS_1_S6",
+      "UPSTREAM": "BUS_S1",
+      "DOWNSTREAM": "BUS_1_S6",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "BUS_SO_BUS_1_S5",
+      "UPSTREAM": "BUS_SO",
+      "DOWNSTREAM": "BUS_1_S5",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_S4_BUS_1_S7",
+      "UPSTREAM": "METRO_S4",
+      "DOWNSTREAM": "BUS_1_S7",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_S4_BUS_S4",
+      "UPSTREAM": "METRO_S4",
+      "DOWNSTREAM": "BUS_S4",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_S2_BUS_1_S6",
+      "UPSTREAM": "METRO_S2",
+      "DOWNSTREAM": "BUS_1_S6",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_S2_BUS_S2",
+      "UPSTREAM": "METRO_S2",
+      "DOWNSTREAM": "BUS_S2",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_SO_BUS_1_S5",
+      "UPSTREAM": "METRO_SO",
+      "DOWNSTREAM": "BUS_1_S5",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_SO_BUS_SO",
+      "UPSTREAM": "METRO_SO",
+      "DOWNSTREAM": "BUS_SO",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_S4_TRAM_S4",
+      "UPSTREAM": "METRO_S4",
+      "DOWNSTREAM": "TRAM_S4",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_S2_TRAM_S2",
+      "UPSTREAM": "METRO_S2",
+      "DOWNSTREAM": "TRAM_S2",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "METRO_SO_TRAM_SO",
+      "UPSTREAM": "METRO_SO",
+      "DOWNSTREAM": "TRAM_SO",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S4_BUS_1_S7",
+      "UPSTREAM": "TRAM_S4",
+      "DOWNSTREAM": "BUS_1_S7",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S4_BUS_S4",
+      "UPSTREAM": "TRAM_S4",
+      "DOWNSTREAM": "BUS_S4",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S3_BUS_1_S3",
+      "UPSTREAM": "TRAM_S3",
+      "DOWNSTREAM": "BUS_1_S3",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S3_BUS_S3",
+      "UPSTREAM": "TRAM_S3",
+      "DOWNSTREAM": "BUS_S3",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S2_BUS_1_S6",
+      "UPSTREAM": "TRAM_S2",
+      "DOWNSTREAM": "BUS_1_S6",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S2_BUS_S2",
+      "UPSTREAM": "TRAM_S2",
+      "DOWNSTREAM": "BUS_S2",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S1_BUS_1_S6",
+      "UPSTREAM": "TRAM_S1",
+      "DOWNSTREAM": "BUS_1_S6",
+      "LENGTH": 304.138126514911,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 304.138126514911,
+          "travel_time": 217.24151893922215
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S1_BUS_S1",
+      "UPSTREAM": "TRAM_S1",
+      "DOWNSTREAM": "BUS_S1",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_SO_BUS_1_S5",
+      "UPSTREAM": "TRAM_SO",
+      "DOWNSTREAM": "BUS_1_S5",
+      "LENGTH": 50.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 50.0,
+          "travel_time": 35.714285714285715
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_SO_BUS_SO",
+      "UPSTREAM": "TRAM_SO",
+      "DOWNSTREAM": "BUS_SO",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S4_METRO_S4",
+      "UPSTREAM": "TRAM_S4",
+      "DOWNSTREAM": "METRO_S4",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_S2_METRO_S2",
+      "UPSTREAM": "TRAM_S2",
+      "DOWNSTREAM": "METRO_S2",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    },
+    {
+      "ID": "TRAM_SO_METRO_SO",
+      "UPSTREAM": "TRAM_SO",
+      "DOWNSTREAM": "METRO_SO",
+      "LENGTH": 0.0,
+      "COSTS": {
+        "WALK": {
+          "speed": 1.4,
+          "length": 0.0,
+          "travel_time": 0.0
+        }
+      },
+      "LABEL": "TRANSIT"
+    }
+  ]
+}
