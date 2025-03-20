@@ -70,9 +70,8 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         assert cost == 'travel_time'
         self.congestion_prediction_technique = congestion_prediction_technique
         self.baseline = baseline
+        self.cm = CongestionModel.get_instance(mmgraph)
 
-        # self.CI_data = pd.read_csv(congestion_file_path)
-        # self.CI_data.TIMESTAMP = pd.to_datetime(self.CI_data.TIMESTAMP, format='mixed')
 
     def set_random_seed(self, seed):
         """Method that sets the random seed for this decision model.
@@ -95,16 +94,20 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             -selected_path: path chosen
         """
         print('N PATHS:', len(paths), 'found for user', uid)
+
         paths_ID = dict()
         for i in range(len(paths)):
             p_hash = self.get_path_hash(paths[i])
+            #self.update_or_add(p_hash, False)
             paths_ID[p_hash] = paths[i]
 
         the_chosen_one = None
 
         if len(paths) > 1:
+            ## HO MESSO LA SOMMA DI PERCORRENZA SUI LINK
             cost_score = [p.path_cost for p in paths]
             CI_score = [0 for i in range(len(paths))]
+            #waiting_score = [0 for i in range(len(paths))]
             BI_score = [0 for i in range(len(paths))]
             line_changes = [0] * len(paths)
 
@@ -135,11 +138,14 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                                     t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
                                     print('TIME DEBUG: ', str(tcurrent), sum(path_tt[:i]), t)
                                     CI_score[p] += self.get_CI(t, x, line)
+                                    #waiting_score[p] = self.get_waiting_score(t, x, line)
                                     BI_score[p] += self.get_BI(uid, x, t)
                     i += 1
                 print('')
 
-            ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score, 'BI': BI_score, 'cost': cost_score,
+            ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score,
+                                         #'waiting_score': waiting_score,
+                                         'BI': BI_score, 'cost': cost_score,
                                          'line_changes': line_changes})
 
             # Sort the paths in ascending or descending order based on the criterion's nature. For example:
@@ -149,6 +155,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             # Line Changes: Lower is better (ascending order).
 
             ranked_paths["CongestionRank"] = ranked_paths["CI"].rank(ascending=True)
+            #ranked_paths["WaitingRank"] = ranked_paths["waiting_score"].rank(ascending=True)
             ranked_paths["BehaviorRank"] = ranked_paths["BI"].rank(ascending=False)
             ranked_paths["CostRank"] = ranked_paths["cost"].rank(ascending=True)
             ranked_paths["LineChangesRank"] = ranked_paths["line_changes"].rank(ascending=True)
@@ -170,25 +177,27 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
                 # Calculate total score on the other criteria
                 ranked_paths["TotalRank"] = (
                         ranked_paths["CongestionRank"] +
-                        ranked_paths["BehaviorRank"] +
+                        #ranked_paths["WaitingRank"] +
+                        #ranked_paths["BehaviorRank"] +
                         ranked_paths["CostRank"] +
-                        ranked_paths["LineChangesRank"] #+
+                        ranked_paths["LineChangesRank"] 
                 )
 
                 # Sort by total score
                 ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
 
-            # ranked_to_print = ranked_paths.copy(deep=True)
-            # ranked_to_print['USER'] = [uid] * len(ranked_paths)
-            # ranked_to_print['DEPARTURE'] = [tcurrent] * len(ranked_paths)
-            # ranked_to_print['SERVICES'] = [paths_ID[p].mobility_services for p in ranked_to_print['ID']]
-            # ranked_to_print['NODES'] = [paths_ID[p].nodes for p in ranked_to_print['ID']]
+            ranked_to_print = ranked_paths.copy(deep=True)
+            ranked_to_print['USER'] = [uid] * len(ranked_paths)
+            ranked_to_print['DEPARTURE'] = [tcurrent] * len(ranked_paths)
+            ranked_to_print['SERVICES'] = [paths_ID[p].mobility_services for p in ranked_to_print['ID']]
+            ranked_to_print['NODES'] = [paths_ID[p].nodes for p in ranked_to_print['ID']]
+
 
             for key, value in paths_ID.items():
                 print(key, value.nodes)
 
-            # if 'U' in uid:
-            #     ranked_to_print.to_csv(f'OUTPUTS/rank_{uid}_{str(tcurrent).replace(":", "_")}.csv', index=False)
+            if 'U' in uid:
+                ranked_to_print.to_csv(f'OUTPUTS/rank_{uid}_{str(tcurrent).replace(":", "_")}.csv', index=False)
 
             the_chosen_one = paths_ID[ranked_paths.iloc[0, 0]]
 
@@ -200,6 +209,7 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
             p_hash = self.get_path_hash(paths[0])
             the_chosen_one =  paths[0]
 
+        #self.cm.update_congestion_model(the_chosen_one,the_chosen_one.get_link_cost(self._mlgraph, self._cost),tcurrent)
         return the_chosen_one
 
     def get_path_hash(self, path):
@@ -210,26 +220,13 @@ class BehaviorCongestionDecisionModel(AbstractDecisionModel):
         hex_hash = hash_object.hexdigest()
         return hex_hash
 
-    def get_CI(self, node):
-        return CongestionModel.get_instance(self.congestion_prediction_technique).predict_congestion(node)
-        # print(node, tcurrent)
-        # CI = self.CI_data[self.CI_data['NODE'] == node].copy(deep=True)
-        # if len(CI) == 0:
-        #     return 0
-        # else:
-        #     # tcurrent_datetime = pd.to_datetime(str(tcurrent))
-        #     # CI['time_diff'] = [(x - tcurrent_datetime).total_seconds() for x in CI.TIMESTAMP]
-        #     # CI = CI[CI['time_diff'] >= 0]
-        #     # CI = CI.sort_values(by=['time_diff', 'CONGESTION INDEX']).reset_index(drop=True, inplace=False)
-        #     # if len(CI) == 0:
-        #     #     return 0
-        #     # else:
-        #     #     print('node', node, tcurrent, CI.loc[0, 'CONGESTION INDEX'])
-        #     #     return CI['CONGESTION INDEX'][0]
-        #     window = 60
-        #     CI = self.simple_moving_average(CI['CONGESTION INDEX'], window)
-        #     print('CI', tcurrent)
-        #     return CI
+    def get_CI(self, t, node, line):
+        val = CongestionModel.get_instance().predict_congestion(node)
+        return 0 if np.isnan(val) else val
+    
+    def get_waiting_score(self, t, node, line):
+        val = CongestionModel.get_instance().predict_waiting(t, node, line)
+        return 0 if np.isnan(val) else val
 
     def get_BI(self, uid, x, tcurrent):
         user = uid

@@ -5,7 +5,7 @@ import csv
 import traceback
 import random
 from typing import List, Optional
-import shutil
+
 import numpy as np
 
 from mnms.hybrid_congestion_model import CongestionModel
@@ -54,6 +54,7 @@ class Supervisor(object):
         self._mlgraph: MultiLayerGraph = None
         self._demand: AbstractDemandManager = demand
         self._flow_motor: AbstractMFDFlowMotor = flow_motor
+        self.cm = CongestionModel.get_instance(self.mmgraph)
 
         self._decision_model:AbstractDecisionModel = decision_model
         if user_flow is None:
@@ -333,7 +334,6 @@ class Supervisor(object):
         principal_dt = flow_dt * affectation_factor
         self.tcurrent = tstart
         progress = ProgressBar(ceil((tend-tstart).to_seconds()/(flow_dt.to_seconds()*affectation_factor)))
-        cm = CongestionModel.get_instance()
         f = open(f'OUTPUTS{os.sep}congestion_file.csv', 'w')
         f.write('TIMESTAMP,VEHICLE ID,PASSENGERS,CAPACITY,CONGESTION INDEX,NODE\n')
 
@@ -406,7 +406,7 @@ class Supervisor(object):
                         capacity = VehicleManager._vehicles[vehicle_id].capacity
                         CI = passengers/capacity
                         node = VehicleManager._vehicles[vehicle_id].current_node
-                        cm.update_congestion_model_mavg({
+                        self.cm.update_congestion_model_mavg({
                                                 'TIMESTAMP': [str(self.tcurrent)],
                                                 'VEHICLE ID': [vehicle_id],
                                                 'PASSENGERS': [passengers],

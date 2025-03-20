@@ -1,11 +1,12 @@
 import logging
+import sys
 from math import exp, fsum
 from typing import List, Tuple
 
 import numpy as np
 
 from mnms import create_logger
-from mnms.simple_congestion_model import CongestionModel
+from mnms.hybrid_congestion_model import CongestionModel
 from mnms.demand.user import Path
 from mnms.time import Time
 from mnms.travel_decision.abstract import AbstractDecisionModel
@@ -23,7 +24,7 @@ log = create_logger(__name__)
 class BCDecisionModel(AbstractDecisionModel):
     def __init__(self, mmgraph: MultiLayerGraph, considered_modes=None, cost='travel_time', outfile: str = None,
                  verbose_file=False,
-                 baseline=False, top_k=3, n_shortest_path=10,
+                 sim_type='QoEdriven', top_k=3, n_shortest_path=10,
                  max_diff_cost: float = 0.25,
                  max_dist_in_common: float = 0.95,
                  cost_multiplier_to_find_k_paths: float = 10,
@@ -58,18 +59,16 @@ class BCDecisionModel(AbstractDecisionModel):
                                                               cost_multiplier_to_find_k_paths=cost_multiplier_to_find_k_paths,
                                                               )
         # Connect to Redis (adjust host and port)
-        #self.redis_client = redis.StrictRedis(host='localhost',
-        #                                      port=6379, decode_responses=True)
+        self.redis_client = redis.StrictRedis(host='localhost',
+                                             port=6379, decode_responses=True)
 
         self._seed = None
         self._rng = None
-        self.baseline = baseline
+        self.sim_type = sim_type
         self.top_k = top_k
         assert cost == 'travel_time'
-        self.BI_data = pd.read_csv(behavior_file, sep=';')
-        self.BI_data.TIME = pd.to_datetime(self.BI_data.TIME, format='mixed')
-        self.path_popularity = pd.DataFrame(columns=['ID', 'count'])
-
+        # self.BI_data = pd.read_csv(behavior_file, sep=';')
+        # self.BI_data.TIME = pd.to_datetime(self.BI_data.TIME, format='mixed')
         self.cm = CongestionModel.get_instance(mmgraph)
 
         # self.CI_data = pd.read_csv(congestion_file_path)
@@ -95,28 +94,6 @@ class BCDecisionModel(AbstractDecisionModel):
         hex_hash = hash_object.hexdigest()
         return hex_hash
 
-    # def update_or_add(self, new_value, increment=False):
-    #     """
-    #     Updates the count if the name exists, otherwise adds a new row.
-    #
-    #     Args:
-    #         df: The Pandas DataFrame.
-    #         new_name: The name to update or add.
-    #
-    #     Returns:
-    #         The updated DataFrame.
-    #     """
-    #     if new_value in self.path_popularity['ID'].values:
-    #         if increment:
-    #             # Name exists, increment count
-    #             print('Incrementing count for', new_value)
-    #             self.path_popularity.loc[self.path_popularity['ID'] == new_value, 'count'] += 1
-    #     else:
-    #         # Name doesn't exist, add a new row
-    #         new_row = {'ID': str(new_value), 'count': 0}
-    #         self.path_popularity = pd.concat([self.path_popularity, pd.DataFrame([new_row])], ignore_index=True)
-    #
-    #     self.path_popularity.to_csv('path_popularity.csv', index=False)
 
     def path_choice(self, paths: List[Path], uid, tcurrent=None) -> Path:
         """Method that proceeds to the selection of the path.
@@ -141,6 +118,7 @@ class BCDecisionModel(AbstractDecisionModel):
             ## HO MESSO LA SOMMA DI PERCORRENZA SUI LINK
             cost_score = [p.path_cost for p in paths]
             CI_score = [0 for i in range(len(paths))]
+            waiting_score = [0 for i in range(len(paths))]
             BI_score = [0 for i in range(len(paths))]
             line_changes = [0] * len(paths)
 
@@ -171,62 +149,72 @@ class BCDecisionModel(AbstractDecisionModel):
                                     t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
                                     print('TIME DEBUG: ', str(tcurrent), sum(path_tt[:i]), t)
                                     CI_score[p] += self.get_CI(t, x, line)
+                                    #waiting_score[p] = self.get_waiting_score(t, x, line)
                                     BI_score[p] += self.get_BI(uid, x, t)
                     i += 1
                 print('')
 
             ranked_paths = pd.DataFrame({'ID': paths_ID.keys(), 'CI': CI_score, 'BI': BI_score, 'cost': cost_score,
+                                         'waiting_score': waiting_score,
                                          'line_changes': line_changes})
-
-            # Sort the paths in ascending or descending order based on the criterion's nature. For example:
-            # Congestion Index: Lower is better (ascending order).
-            # Behavior Index (Preference): Higher is better (descending order).
-            # Cost (in Time): Lower is better (ascending order).
-            # Line Changes: Lower is better (ascending order).
-
             ranked_paths["CongestionRank"] = ranked_paths["CI"].rank(ascending=True)
+            #ranked_paths["WaitingRank"] = ranked_paths["waiting_score"].rank(ascending=True)
             ranked_paths["BehaviorRank"] = ranked_paths["BI"].rank(ascending=False)
             ranked_paths["CostRank"] = ranked_paths["cost"].rank(ascending=True)
             ranked_paths["LineChangesRank"] = ranked_paths["line_changes"].rank(ascending=True)
 
-            if self.baseline:
+            if self.sim_type == 'QoEdriven':
                 # Calculate total score
                 ranked_paths["TotalRank"] = (
                         ranked_paths["BehaviorRank"] +
-                        #ranked_paths["CostRank"] +
+                        ranked_paths["CostRank"] +
                         ranked_paths["LineChangesRank"]
                 )
 
                 ranked_paths.drop(columns=['CongestionRank', 'CI'], inplace=True)
                 ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
-            else:
-                # Select the best k path based on behavior rank
-
-                # Calculate total score on the other criteria
+            elif self.sim_type == 'Balanced':
                 ranked_paths["TotalRank"] = (
-                        ranked_paths["CongestionRank"] +
-                        #ranked_paths["BehaviorRank"] +
-                        #ranked_paths["CostRank"] +
-                        ranked_paths["LineChangesRank"] #+
+                        ranked_paths["BehaviorRank"] +
+                        ranked_paths["CostRank"] +
+                        ranked_paths["LineChangesRank"] +
+                        ranked_paths["CongestionRank"]
                 )
+                ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
 
-                ranked_paths = ranked_paths.nsmallest(self.top_k, "TotalRank")
+#                 ranked_paths["CongestionScore"] = (
+#                         ranked_paths["CongestionRank"] #+
+#                         #ranked_paths["WaitingRank"]
+#                 )
+#                 top_k = ranked_paths.nsmallest(self.top_k, "CongestionScore")
+                
+#                 top_k["TotalRank"] = (
+#                         top_k["BehaviorRank"] +
+#                         top_k["CostRank"] +
+#                         top_k["LineChangesRank"]
+#                 )
+                # ranked_paths = top_k.sort_values(by="TotalRank", ascending=True)
+            elif self.sim_type == 'QoSdriven':
+                ranked_paths["CongestionScore"] = (
+                        ranked_paths["CongestionRank"] #+
+                        #ranked_paths["WaitingRank"]
+                )
+                ranked_paths = ranked_paths.sort_values(by="CongestionScore", ascending=True)
+            else:
+                print(f'{sim_type} NOT RECOGNIZED.')
+                sys.exit(1)
 
-                # Sort by total score
-                ranked_paths = ranked_paths.sort_values(by="BehaviorRank", ascending=True)
-
-            ranked_to_print = ranked_paths.copy(deep=True)
-            ranked_to_print['USER'] = [uid] * len(ranked_paths)
-            ranked_to_print['DEPARTURE'] = [tcurrent] * len(ranked_paths)
-            ranked_to_print['SERVICES'] = [paths_ID[p].mobility_services for p in ranked_to_print['ID']]
-            ranked_to_print['NODES'] = [paths_ID[p].nodes for p in ranked_to_print['ID']]
-
+            # ranked_to_print = ranked_paths.copy(deep=True)
+            # ranked_to_print['USER'] = [uid] * len(ranked_paths)
+            # ranked_to_print['DEPARTURE'] = [tcurrent] * len(ranked_paths)
+            # ranked_to_print['SERVICES'] = [paths_ID[p].mobility_services for p in ranked_to_print['ID']]
+            # ranked_to_print['NODES'] = [paths_ID[p].nodes for p in ranked_to_print['ID']]
 
             for key, value in paths_ID.items():
                 print(key, value.nodes)
 
-            if 'U' in uid:
-                ranked_to_print.to_csv(f'OUTPUTS/rank_{uid}_{str(tcurrent).replace(":", "_")}.csv', index=False)
+            # if 'U' in uid:
+            #     ranked_to_print.to_csv(f'OUTPUTS/rank_{uid}_{str(tcurrent).replace(":", "_")}.csv', index=False)
 
             the_chosen_one = paths_ID[ranked_paths.iloc[0, 0]]
 
@@ -245,7 +233,23 @@ class BCDecisionModel(AbstractDecisionModel):
         val = CongestionModel.get_instance().predict_congestion_mavg(t, node, line)
         return 0 if np.isnan(val) else val
 
+    def get_waiting_score(self, t, node, line):
+        val = CongestionModel.get_instance().predict_waiting(t, node, line)
+        return 0 if np.isnan(val) else val
+    
     def get_BI(self, uid, x, tcurrent):
+        user = uid
+        bin = self.get_current_time_bin(tcurrent)
+        target = f'{self.clean_route(x)}-{bin}'
+
+        BI_value = self.redis_client.hget(user, target)
+        if BI_value is None:
+            BI_value = 0
+        print('BEHAVIOR --> User', user, 'bin', bin,'BI', BI_value)
+        return 0 if np.isnan(float(BI_value)) else float(BI_value)
+    
+
+    def get_synthetic_BI(self, uid, x, tcurrent):
         #print('Compute BI score....')
         user = uid
         bin = self.get_current_time_bin(tcurrent)
@@ -267,11 +271,11 @@ class BCDecisionModel(AbstractDecisionModel):
                                          microseconds=tcurrent.microsecond)
         return bin_start.strftime("%H:%M")
 
-    # def clean_route(self, route):
-    #     # Rimuove tutto ciò che si trova tra due occorrenze di DIRx (incluso DIRx)
-    #     #route = re.sub(r'_DIR\d+.*?_DIR\d+', '', route, flags=re.IGNORECASE)
-    #     # Converte tutto in maiuscolo
-    #     route = route.split('_')[1]
-    #     route = route.upper()
-    #     return route
+    def clean_route(self, route):
+        # Rimuove tutto ciò che si trova tra due occorrenze di DIRx (incluso DIRx)
+        #route = re.sub(r'_DIR\d+.*?_DIR\d+', '', route, flags=re.IGNORECASE)
+        # Converte tutto in maiuscolo
+        route = route.split('_')[1]
+        route = route.upper()
+        return route
 

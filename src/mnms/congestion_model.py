@@ -10,24 +10,23 @@ class CongestionModel:
 
     __instance = None  # Private class variable to hold the instance
 
-    def __init__(self, prediction_technique):
+    def __init__(self):
         """
         Private initializer. Prevents direct instantiation.
         """
         if CongestionModel.__instance is not None:
             raise Exception("CongestionModel is a singleton. Use get_instance() instead.")
         else:
-            self.prediction_technique = prediction_technique
             self.data = pd.DataFrame(columns=['TIMESTAMP', 'VEHICLE ID', 'PASSENGERS', 'CAPACITY', 'CONGESTION INDEX', 'NODE'])
 
     @staticmethod
-    def get_instance(prediction_technique=('temporal_moving_avg', {'window':20})):
+    def get_instance():
         """
         Static method to get the singleton instance.
         Creates the instance if it doesn't exist.
         """
         if CongestionModel.__instance is None:
-            CongestionModel.__instance = CongestionModel(prediction_technique)
+            CongestionModel.__instance = CongestionModel()
         return CongestionModel.__instance
 
     def update_congestion_model(self, new_data):
@@ -45,14 +44,13 @@ class CongestionModel:
             return 0
 
         # Apply temporal moving average if technique is specified
-        if self.prediction_technique[0] == 'temporal_moving_avg':
-            window = self.prediction_technique[1].get('window', 20)  # Default to window=1 if not provided
-            # Compute rolling mean
-            CI_mod = CI.copy()  # Ensure it's a separate dataframe
-            CI_mod.loc[:, 'CONGESTION INDEX MA'] = CI['CONGESTION INDEX'].rolling(window=window).mean()
-            print('Computing congestion')
-            print(CI_mod.head(5))
-            return CI_mod['CONGESTION INDEX MA'].iloc[-1]
+        window = 10  # Default to window=1 if not provided
+        # Compute rolling mean
+        CI_mod = CI.copy()  # Ensure it's a separate dataframe
+        CI_mod.loc[:, 'CONGESTION INDEX MA'] = CI['CONGESTION INDEX'].rolling(window=window).mean()
+        print('Computing congestion')
+        print(CI_mod.head(5))
+        return CI_mod['CONGESTION INDEX MA'].iloc[-1]
 
         # Default return if no technique applies
         return CI['CONGESTION INDEX'].iloc[-1]

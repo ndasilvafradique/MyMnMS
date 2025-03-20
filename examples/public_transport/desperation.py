@@ -10,18 +10,62 @@ from mnms.log import attach_log_file, LOGLEVEL, set_mnms_logger_level
 from mnms.time import Time, Dt
 from mnms.io.graph import load_graph, load_odlayer, save_graph, save_odlayer, save_transit_link_odlayer, \
     load_transit_links
-from mnms.travel_decision.behavior_and_congestion_decision_model import BehaviorCongestionDecisionModel
+from mnms.travel_decision.custom_decision_model import BCDecisionModel
 from mnms.travel_decision.logit import LogitDecisionModel
 from mnms.tools.observer import CSVUserObserver, CSVVehicleObserver
 from mnms.generation.layers import generate_bbox_origin_destination_layer
 from mnms.mobility_service.personal_vehicle import PersonalMobilityService
 from mnms.mobility_service.public_transport import PublicTransportMobilityService
 import json
-
+import shutil
 import pandas as pd
+
+def ensure_outputs_dir():
+    """Checks if the 'OUTPUTS' directory exists. If it does, deletes it and creates a new one. Otherwise, creates the directory."""
+
+    outputs_dir = "OUTPUTS"  # Define the directory name
+
+    if os.path.exists(outputs_dir):
+        try:
+            shutil.rmtree(outputs_dir)  # Delete the existing directory and its contents
+            print(f"Deleted existing '{outputs_dir}' directory.")
+        except OSError as e:
+            print(f"Error deleting '{outputs_dir}': {e}")
+            return  # Exit the function if deletion fails.
+
+    try:
+        os.makedirs(outputs_dir)  # Create the new directory
+        print(f"Created new '{outputs_dir}' directory.")
+    except OSError as e:
+        print(f"Error creating '{outputs_dir}': {e}")
+
+
+def rename_outputs_dir(new_dir_name):
+    """Renames the 'OUTPUTS' directory to 'BASELINE' or 'TEST' based on the 'baseline' flag.
+
+    Args:
+        baseline (bool): If True, renames to 'BASELINE'; otherwise, renames to 'TEST'.
+    """
+
+    outputs_dir = "OUTPUTS"
+
+    if os.path.exists(outputs_dir):
+        try:
+            os.rename(outputs_dir, new_dir_name)
+            print(f"Renamed '{outputs_dir}' to '{new_dir_name}'.")
+        except OSError as e:
+            print(f"Error renaming '{outputs_dir}' to '{new_dir_name}': {e}")
+    else:
+        print(f"'{outputs_dir}' directory does not exist. Creating '{new_dir_name}'")
+        try:
+            os.makedirs(new_dir_name)
+        except OSError as e:
+            print(f"Error creating '{new_dir_name}': {e}")
 
 indir = "INPUTS"
 outdir = "OUTPUTS"
+
+ensure_outputs_dir()
 
 # set_all_mnms_logger_level(LOGLEVEL.WARNING)
 set_mnms_logger_level(LOGLEVEL.INFO, ["mnms.simulation"])
@@ -118,7 +162,7 @@ if __name__ == '__main__':
     metro_service.attach_vehicle_observer(CSVVehicleObserver(outdir + "/veh.csv"))
     mmgraph.layers["METROLayer"].add_mobility_service(metro_service)
 
-    demand_file_name = indir + "/demand_custom.csv"
+    demand_file_name = indir + "/demand_custom_allday.csv"
     force_public_transport(demand_file_name)
     demand = CSVDemandManager(demand_file_name)
     demand.add_user_observer(CSVUserObserver(outdir + "/user.csv"), user_ids="all")
@@ -137,11 +181,10 @@ if __name__ == '__main__':
     flow_motor.add_reservoir(Reservoir(mmgraph.roads.zones["RES"], ["CAR"], calculate_V_MFD))
 
     #travel_decision = LogitDecisionModel(mmgraph, outfile=outdir + "/path.csv")
-    ## BASELINE
-    baseline = True
-    print(f'SIMULATION TYPE:', 'BASELINE' if baseline else 'TEST')
-    travel_decision = BehaviorCongestionDecisionModel(mmgraph, outfile=outdir + "/path.csv", 
-                                                     baseline=baseline, top_k=5, n_shortest_path=10, 
+    sim_type = 'QoEdriven'
+    print(f'SIMULATION TYPE:', sim_type)
+    travel_decision = BCDecisionModel(mmgraph, outfile=outdir + "/path.csv", 
+                                                     sim_type=sim_type, top_k=5, n_shortest_path=10, 
                                                      max_diff_cost = 0.90,
                                                      max_dist_in_common = 0.98,
                                                      cost_multiplier_to_find_k_paths = 1.1,)
@@ -153,6 +196,8 @@ if __name__ == '__main__':
                             outfile=outdir + "/travel_time_link.csv")
 
     start = time.time()
-    supervisor.run(Time('16:44:00'), Time('20:00:00'), Dt(seconds=30), 1)
+    supervisor.run(Time('07:00:00'), Time('09:00:00'), Dt(seconds=30), 1)
     end = time.time()
     print(f'SIMULATION COMPLETED IN {end-start} s')
+    
+    rename_outputs_dir(sim_type)
