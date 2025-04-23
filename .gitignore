@@ -5,6 +5,7 @@ __pycache__/
 
 **/*nohup*.out
 */SIMULATION*/
+*/OLD/*
 # C extensions
 *.so
 
