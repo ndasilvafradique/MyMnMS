@@ -138,7 +138,7 @@ class BCDecisionModel(AbstractDecisionModel):
                     line = ''
                 for x in paths[p].nodes[1:-1]:
                     if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
-                        next_line = x.split('_')[0] #+ x.split('_')[1]
+                        next_line = x.split('_')[0] + x.split('_')[1]
                         if line != next_line or i == 0:
                             line = next_line
                             # This control is useful when an user crosses a station without taking
@@ -146,7 +146,7 @@ class BCDecisionModel(AbstractDecisionModel):
                             if len(services) and next_line == services[0]:
                                     services = services[1:]
                                     t = timedelta(seconds=sum(path_tt[:i])) + datetime.strptime(str(tcurrent),'%H:%M:%S.%f')
-                                    t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
+                                    #t = datetime.strptime(str(tcurrent), '%H:%M:%S.%f') - timedelta(seconds=30)
                                     print('TIME DEBUG: ', str(tcurrent), sum(path_tt[:i]), t)
                                     CI_score[p] += self.get_CI(t, x, line)
                                     #waiting_score[p] = self.get_waiting_score(t, x, line)
@@ -174,26 +174,13 @@ class BCDecisionModel(AbstractDecisionModel):
                 ranked_paths.drop(columns=['CongestionRank', 'CI'], inplace=True)
                 ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
             elif self.sim_type == 'Balanced':
-                ranked_paths["TotalRank"] = (
-                        ranked_paths["BehaviorRank"] +
-                        ranked_paths["CostRank"] +
-                        ranked_paths["LineChangesRank"] +
-                        ranked_paths["CongestionRank"]
+                top_k = ranked_paths.nsmallest(self.top_k, "CongestionRank")
+                top_k["TotalRank"] = (
+                        top_k["BehaviorRank"] +
+                        top_k["CostRank"] +
+                        top_k["LineChangesRank"]
                 )
-                ranked_paths = ranked_paths.sort_values(by="TotalRank", ascending=True)
-
-#                 ranked_paths["CongestionScore"] = (
-#                         ranked_paths["CongestionRank"] #+
-#                         #ranked_paths["WaitingRank"]
-#                 )
-#                 top_k = ranked_paths.nsmallest(self.top_k, "CongestionScore")
-                
-#                 top_k["TotalRank"] = (
-#                         top_k["BehaviorRank"] +
-#                         top_k["CostRank"] +
-#                         top_k["LineChangesRank"]
-#                 )
-                # ranked_paths = top_k.sort_values(by="TotalRank", ascending=True)
+                ranked_paths = top_k.sort_values(by="TotalRank", ascending=True)
             elif self.sim_type == 'QoSdriven':
                 ranked_paths["CongestionScore"] = (
                         ranked_paths["CongestionRank"] #+
@@ -273,9 +260,8 @@ class BCDecisionModel(AbstractDecisionModel):
 
     def clean_route(self, route):
         # Rimuove tutto ciò che si trova tra due occorrenze di DIRx (incluso DIRx)
-        #route = re.sub(r'_DIR\d+.*?_DIR\d+', '', route, flags=re.IGNORECASE)
+        route = re.sub(r'_DIR\d+.*?_DIR\d+', '', route, flags=re.IGNORECASE)
         # Converte tutto in maiuscolo
-        route = route.split('_')[1]
         route = route.upper()
         return route
 
