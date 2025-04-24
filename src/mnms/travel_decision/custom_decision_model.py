@@ -131,12 +131,14 @@ class BCDecisionModel(AbstractDecisionModel):
                 print('PATH COST ANALYSIS: ', sum(path_tt), paths[p].get_link_cost(self._mlgraph, self._cost))
                 # EXCLUDE THE ORIGIN AND DESTINAION FROM COMPUTATION
                 i = 0
-                x = paths[p].nodes[1]
+                x = paths[p].nodes[0]
                 if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
                     line = x.split('_')[0] + x.split('_')[1]
+                    start = 0
                 else:
                     line = ''
-                for x in paths[p].nodes[1:-1]:
+                    start = 1
+                for x in paths[p].nodes[start:-1]:
                     if 'METRO' in x or 'TRAM' in x or 'BUS' in x:
                         next_line = x.split('_')[0] + x.split('_')[1]
                         if line != next_line or i == 0:
